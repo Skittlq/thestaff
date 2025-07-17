@@ -1,0 +1,14 @@
+{
+  "itemGroup.thestaff": "Example Mod Tab",
+  "block.thestaff.example_block": "Example Block",
+  "item.thestaff.purple_staff": "Purple Staff",
+  "item.thestaff.purple_staff.with_block": "%s Purple Staff",
+
+  "thestaff.configuration.title": "The Staff Configs",
+  "thestaff.configuration.section.thestaff.common.toml": "The Staff Configs",
+  "thestaff.configuration.section.thestaff.common.toml.title": "The Staff Configs",
+  "thestaff.configuration.items": "Item List",
+  "thestaff.configuration.logDirtBlock": "Log Dirt Block",
+  "thestaff.configuration.magicNumberIntroduction": "Magic Number Text",
+  "thestaff.configuration.magicNumber": "Magic Number"
+}

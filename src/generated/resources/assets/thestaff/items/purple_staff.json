@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "cases": [
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "thestaff:item/purple_staff_netherite_block"
+        },
+        "when": "minecraft:netherite_block"
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "thestaff:item/purple_staff_empty"
+    },
+    "property": "thestaff:stored_block_id"
+  }
+}
