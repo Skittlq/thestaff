@@ -10,11 +10,12 @@ public class StaffAbilities {
     private static final Map<ResourceLocation, BlockAbility> ABILITIES = new HashMap<>();
 
     static {
-        register("minecraft:stone", new StoneAbility());
-        register("minecraft:dirt", new DirtAbility());
-        register("minecraft:oak_planks", new OakPlanksAbility());
-        register("minecraft:command_block", new CommandBlockAbility());
         register("minecraft:netherite_block", new NetheriteBlockAbility());
+        register("minecraft:diamond_block", new DiamondBlockAbility());
+        register("minecraft:gold_block", new GoldBlockAbility());
+        register("minecraft:iron_block", new IronBlockAbility());
+        register("minecraft:copper_block", new CopperBlockAbility());
+        register("minecraft:coal_block", new CoalBlockAbility());
     }
 
     private static void register(String blockId, BlockAbility ability) {

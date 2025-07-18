@@ -14,7 +14,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
-import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
@@ -26,7 +25,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.state.BlockState;
 
 import javax.annotation.Nullable;
-import java.util.List;
 import java.util.function.Consumer;
 
 public class StaffItem extends Item {
@@ -52,23 +50,6 @@ public class StaffItem extends Item {
     }
 
     @Override
-    public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
-        ItemAttributeModifiers base = super.getDefaultAttributeModifiers(stack);
-        var id = getStoredBlockId(stack);
-        if (id == null) return base;
-
-        var builder = ItemAttributeModifiers.builder();
-
-        for (var entry : base.modifiers()) {
-            builder.add(entry.attribute(), entry.modifier(), entry.slot(), entry.display());
-        }
-
-        StaffAbilities.get(id).addModifiers(stack, builder);
-
-        return builder.build();
-    }
-
-    @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltipAdder, TooltipFlag flag) {
         var id = getStoredBlockId(stack);
         Item block = getStoredBlock(stack).getItem();
@@ -83,42 +64,36 @@ public class StaffItem extends Item {
 
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
-        if (level.isClientSide) return InteractionResult.SUCCESS;
+        if (level.isClientSide) return InteractionResult.PASS;
 
-        ItemStack staffStack = player.getItemInHand(hand);
-        if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
+        ItemStack mainHand = player.getMainHandItem();
+        ItemStack offHand = player.getOffhandItem();
+
+        if (offHand.getItem() != this) return InteractionResult.PASS;
+
         if (!player.isShiftKeyDown()) return InteractionResult.PASS;
 
-        ItemStack offhandStack = player.getOffhandItem();
-
-        if (!offhandStack.isEmpty() && offhandStack.getItem() instanceof BlockItem && offhandStack.getCount() > 0) {
-            if (!hasStoredBlock(staffStack)) {
-                ResourceLocation id = BuiltInRegistries.ITEM.getKey(offhandStack.getItem());
-                System.out.println("Offhand Item ID: " + id);
-
-                if (offhandStack.getItem().builtInRegistryHolder().is(ALLOWED_BLOCKS_TAG)) {
-                    CompoundTag tag = new CompoundTag();
-                    tag.putString(BLOCK_ID_KEY, id.toString());
-                    staffStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-                    offhandStack.shrink(1);
-
-                    return InteractionResult.CONSUME;
-                } else {
-                    player.displayClientMessage(Component.literal("The Staff Rejects This Block."), true);
-                    return InteractionResult.FAIL;
-                }
+        if (!mainHand.isEmpty() && mainHand.getItem() instanceof BlockItem && !hasStoredBlock(offHand)) {
+            ResourceLocation id = BuiltInRegistries.ITEM.getKey(mainHand.getItem());
+            if (mainHand.getItem().builtInRegistryHolder().is(ALLOWED_BLOCKS_TAG)) {
+                CompoundTag tag = new CompoundTag();
+                tag.putString(BLOCK_ID_KEY, id.toString());
+                offHand.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                mainHand.shrink(1);
+                return InteractionResult.CONSUME;
+            } else {
+                player.displayClientMessage(Component.literal("The Staff Rejects This Block."), true);
+                return InteractionResult.FAIL;
             }
         }
 
-        if (offhandStack.isEmpty() && hasStoredBlock(staffStack)) {
-            CustomData data = staffStack.get(DataComponents.CUSTOM_DATA);
-
-            ItemStack stored = getStoredBlock(staffStack);
+        if (mainHand.isEmpty() && hasStoredBlock(offHand)) {
+            ItemStack stored = getStoredBlock(offHand);
             if (!stored.isEmpty() && stored.getItem() != Items.AIR) {
-                player.setItemInHand(InteractionHand.OFF_HAND, stored);
+                player.setItemInHand(InteractionHand.MAIN_HAND, stored);
 
                 CompoundTag tag = new CompoundTag();
-                staffStack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                offHand.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
                 return InteractionResult.CONSUME;
             }
         }
@@ -173,6 +148,12 @@ public class StaffItem extends Item {
         return null;
     }
 
+    @Override
+    public float getDestroySpeed(ItemStack stack, BlockState state) {
+        return getStoredBlockId(stack) != null
+                ? StaffAbilities.get(getStoredBlockId(stack)).miningSpeed(stack, state)
+                : super.getDestroySpeed(stack, state);
+    }
 
     @Override
     public void hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
@@ -211,16 +192,31 @@ public class StaffItem extends Item {
             if (id != null) {
                 Player player = context.getPlayer();
                 if (player != null) {
+                    InteractionResult result;
                     if (player.isShiftKeyDown()) {
-                        StaffAbilities.get(id).onShiftRightClickBlock(context.getLevel(), player, context.getClickedPos(), context.getItemInHand());
+                        result = StaffAbilities.get(id).onShiftRightClickBlock(
+                                context.getLevel(), player, context.getClickedPos(), context.getItemInHand()
+                        );
                     } else {
-                        StaffAbilities.get(id).onRightClickBlock(context.getLevel(), player, context.getClickedPos(), context.getItemInHand());
+                        result = StaffAbilities.get(id).onRightClickBlock(
+                                context.getLevel(), player, context.getClickedPos(), context.getItemInHand()
+                        );
                     }
+                    if (result != InteractionResult.PASS) return result;
                 }
             }
         }
         return super.useOn(context);
     }
 
+    @Override
+    public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, @org.jetbrains.annotations.Nullable EquipmentSlot slot) {
+        var id = getStoredBlockId(stack);
+        if (id != null && entity instanceof Player player) {
+            StaffAbilities.get(id).onTick(level, player, player.blockPosition(), stack);
+        }
+
+        super.inventoryTick(stack, level, entity, slot);
+    }
 
 }

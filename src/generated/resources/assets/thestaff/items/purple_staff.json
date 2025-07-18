@@ -5,9 +5,44 @@
       {
         "model": {
           "type": "minecraft:model",
+          "model": "thestaff:item/purple_staff_iron_block"
+        },
+        "when": "minecraft:iron_block"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
           "model": "thestaff:item/purple_staff_netherite_block"
         },
         "when": "minecraft:netherite_block"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "thestaff:item/purple_staff_copper_block"
+        },
+        "when": "minecraft:copper_block"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "thestaff:item/purple_staff_gold_block"
+        },
+        "when": "minecraft:gold_block"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "thestaff:item/purple_staff_diamond_block"
+        },
+        "when": "minecraft:diamond_block"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "thestaff:item/purple_staff_coal_block"
+        },
+        "when": "minecraft:coal_block"
       }
     ],
     "fallback": {

@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.skittlq.thestaff.mixins",
+  "mixins": [
+    "FurnaceAccessor",
+    "MinecartFurnaceAccessor"
+  ],
+  "client": [],
+  "server": []
+}

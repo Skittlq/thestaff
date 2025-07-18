@@ -3,10 +3,7 @@ package com.skittlq.thestaff.abilities.blocks;
 import com.skittlq.thestaff.abilities.BlockAbility;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.ServerTickRateManager;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.TimeUtil;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -14,23 +11,26 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static com.skittlq.thestaff.util.TickCommand.setTickingRate;
 
-public class NetheriteBlockAbility implements BlockAbility {
+public class DiamondBlockAbility implements BlockAbility {
     private static final int BLOCKS_PER_TICK = 200;
 
     @Override
     public void onHitEntity(Level level, Player player, LivingEntity target, ItemStack staff) {
-        target.hurt(player.damageSources().playerAttack(player), 500.0f);
-        target.knockback(20.0,
+        target.hurt(player.damageSources().playerAttack(player), 250.0f);
+        target.knockback(10.0,
                 player.getX() - target.getX(),
                 player.getZ() - target.getZ());
-        target.setDeltaMovement(target.getDeltaMovement().add(0, 5, 0));
+        target.setDeltaMovement(target.getDeltaMovement().add(0, 2.5, 0));
         onBreakBlock(level, player, target.blockPosition(), staff);
         CommandSourceStack source = player.createCommandSourceStackForNameResolution(((ServerLevel) level));
-        smoothTickRateReset(source, 1500, 1000, (ServerLevel) level);
+        smoothTickRateReset(source, 750, 500, (ServerLevel) level);
     }
 
     @Override
@@ -43,7 +43,7 @@ public class NetheriteBlockAbility implements BlockAbility {
         if (level.isClientSide) return;
 
         Queue<BlockPos> targets = new LinkedList<>();
-        int depth = 20, height = 6, width = 6;
+        int depth = 15, height = 4, width = 4;
 
         Vec3 look = player.getLookAngle().normalize();
         Vec3 right = look.cross(new Vec3(0, 1, 0)).normalize();
@@ -74,7 +74,7 @@ public class NetheriteBlockAbility implements BlockAbility {
 
     @Override
     public float miningSpeed(ItemStack stack, BlockState state) {
-        return 1000F;
+        return 500F;
     }
 
     private void scheduleBatchDestruction(ServerLevel level, Queue<BlockPos> targets) {

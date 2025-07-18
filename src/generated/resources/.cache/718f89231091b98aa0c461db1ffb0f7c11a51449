@@ -1,3 +1,8 @@
-// 1.21.7	2025-07-17T23:37:24.4016626	Staff Block Models
-e2c609fbf7ada7584b6172ebd88c0d4c0457c2d3 assets/thestaff/items/purple_staff.json
+// 1.21.7	2025-07-19T02:30:49.2219028	Staff Block Models
+c45fa5df3d78eb26fe17af815273144771795e60 assets/thestaff/items/purple_staff.json
+afd39ab4c5f19afcea625aabcdf43c79356215c0 assets/thestaff/models/item/purple_staff_coal_block.json
+e4affcde65945036794e6e0f266ee210178c7332 assets/thestaff/models/item/purple_staff_copper_block.json
+a29bb4a230b077cd27332b88ca9e6ef8051dcd09 assets/thestaff/models/item/purple_staff_diamond_block.json
+3fa33f57fd85431406890467c05001cd71630ebc assets/thestaff/models/item/purple_staff_gold_block.json
+536c66c017a1b45e3aa43c382c1a9fc1005f9765 assets/thestaff/models/item/purple_staff_iron_block.json
 a8c18c54df6394cc1ef76eeb70c4682a8da62cdc assets/thestaff/models/item/purple_staff_netherite_block.json
