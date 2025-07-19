@@ -5,6 +5,7 @@
     "minecraft:gold_block",
     "minecraft:iron_block",
     "minecraft:copper_block",
-    "minecraft:coal_block"
+    "minecraft:coal_block",
+    "minecraft:obsidian"
   ]
 }

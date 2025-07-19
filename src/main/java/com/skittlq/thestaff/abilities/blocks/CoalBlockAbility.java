@@ -45,10 +45,8 @@ public class CoalBlockAbility implements BlockAbility {
 
     @Override
     public InteractionResult onRightClickBlock(Level level, Player player, BlockPos pos, ItemStack staff) {
-        System.out.println("Right click on block at " + pos + " with staff: " + staff);
 
         if (!level.isClientSide && magicallyFuelFurnace(level, pos)) {
-            System.out.println("Successfully fueled furnace at " + pos);
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;
@@ -56,10 +54,8 @@ public class CoalBlockAbility implements BlockAbility {
 
     @Override
     public InteractionResult onShiftRightClickBlock(Level level, Player player, BlockPos pos, ItemStack staff) {
-        System.out.println("Right click on block at " + pos + " with staff: " + staff);
 
         if (!level.isClientSide && magicallyFuelFurnace(level, pos)) {
-            System.out.println("Successfully fueled furnace at " + pos);
             return InteractionResult.SUCCESS;
         }
         return InteractionResult.PASS;

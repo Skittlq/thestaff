@@ -16,6 +16,7 @@ public class StaffAbilities {
         register("minecraft:iron_block", new IronBlockAbility());
         register("minecraft:copper_block", new CopperBlockAbility());
         register("minecraft:coal_block", new CoalBlockAbility());
+        register("minecraft:obsidian", new ObsidianBlockAbility());
     }
 
     private static void register(String blockId, BlockAbility ability) {

@@ -12,6 +12,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.component.TooltipDisplay;
@@ -211,8 +212,11 @@ public class StaffItem extends Item {
 
     @Override
     public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, @org.jetbrains.annotations.Nullable EquipmentSlot slot) {
+
         var id = getStoredBlockId(stack);
         if (id != null && entity instanceof Player player) {
+            player.setForcedPose(Pose.SWIMMING);
+
             StaffAbilities.get(id).onTick(level, player, player.blockPosition(), stack);
         }
 

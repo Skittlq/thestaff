@@ -12,7 +12,8 @@ public class ModConstants {
             Items.GOLD_BLOCK,
             Items.IRON_BLOCK,
             Items.COPPER_BLOCK,
-            Items.COAL_BLOCK
+            Items.COAL_BLOCK,
+            Items.OBSIDIAN
 
     );
 
