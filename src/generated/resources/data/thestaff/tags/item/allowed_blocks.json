@@ -6,6 +6,11 @@
     "minecraft:iron_block",
     "minecraft:copper_block",
     "minecraft:coal_block",
-    "minecraft:obsidian"
+    "minecraft:obsidian",
+    "minecraft:command_block",
+    "minecraft:grass_block",
+    "minecraft:stone_slab",
+    "minecraft:cake",
+    "minecraft:brewing_stand"
   ]
 }

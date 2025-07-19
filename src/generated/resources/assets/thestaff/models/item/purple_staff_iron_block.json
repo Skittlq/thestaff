@@ -507,78 +507,69 @@
     {
       "faces": {
         "down": {
-          "texture": "#1",
+          "texture": "#all",
           "uv": [
-            0,
-            0,
-            16,
-            16
+            0.0,
+            0.0,
+            16.0,
+            16.0
           ]
         },
         "east": {
-          "texture": "#1",
+          "texture": "#all",
           "uv": [
-            0,
-            0,
-            16,
-            16
+            0.0,
+            0.0,
+            16.0,
+            16.0
           ]
         },
         "north": {
-          "texture": "#1",
+          "texture": "#all",
           "uv": [
-            0,
-            0,
-            16,
-            16
+            0.0,
+            0.0,
+            16.0,
+            16.0
           ]
         },
         "south": {
-          "texture": "#1",
+          "texture": "#all",
           "uv": [
-            0,
-            0,
-            16,
-            16
+            0.0,
+            0.0,
+            16.0,
+            16.0
           ]
         },
         "up": {
-          "texture": "#1",
+          "texture": "#all",
           "uv": [
-            0,
-            0,
-            16,
-            16
+            0.0,
+            0.0,
+            16.0,
+            16.0
           ]
         },
         "west": {
-          "texture": "#1",
+          "texture": "#all",
           "uv": [
-            0,
-            0,
-            16,
-            16
+            0.0,
+            0.0,
+            16.0,
+            16.0
           ]
         }
       },
       "from": [
-        4,
-        19,
-        4
+        4.0,
+        19.0,
+        4.0
       ],
-      "rotation": {
-        "angle": 0,
-        "axis": "y",
-        "origin": [
-          4,
-          19,
-          4
-        ]
-      },
       "to": [
-        12,
-        27,
-        12
+        12.0,
+        27.0,
+        12.0
       ]
     }
   ],
@@ -588,7 +579,7 @@
   ],
   "textures": {
     "0": "thestaff:item/purple_staff",
-    "1": "minecraft:block/iron_block",
+    "all": "minecraft:block/iron_block",
     "particle": "thestaff:item/purple_staff"
   }
 }

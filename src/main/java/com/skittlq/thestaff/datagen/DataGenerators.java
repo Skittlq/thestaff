@@ -4,6 +4,8 @@ import com.skittlq.thestaff.TheStaff;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
@@ -17,9 +19,10 @@ public class DataGenerators {
         DataGenerator generator = event.getGenerator();
         PackOutput packOutput = generator.getPackOutput();
         CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
+        ResourceManager resourceManager = event.getResourceManager(PackType.CLIENT_RESOURCES);
 
         generator.addProvider(true, new AllowedItemTagProvider(packOutput, lookupProvider));
-        generator.addProvider(true, new StaffModelProvider(packOutput, lookupProvider));
+        generator.addProvider(true, new StaffModelProvider(packOutput, lookupProvider, resourceManager));
 
     }
 
@@ -28,9 +31,10 @@ public class DataGenerators {
         DataGenerator generator = event.getGenerator();
         PackOutput packOutput = generator.getPackOutput();
         CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
+        ResourceManager resourceManager = event.getResourceManager(PackType.CLIENT_RESOURCES);
 
         generator.addProvider(true, new AllowedItemTagProvider(packOutput, lookupProvider));
-        generator.addProvider(true, new StaffModelProvider(packOutput, lookupProvider));
+        generator.addProvider(true, new StaffModelProvider(packOutput, lookupProvider, resourceManager));
 
     }
 
