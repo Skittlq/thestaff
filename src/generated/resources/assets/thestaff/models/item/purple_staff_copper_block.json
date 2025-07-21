@@ -507,6 +507,7 @@
     {
       "faces": {
         "down": {
+          "cullface": "down",
           "texture": "#all",
           "uv": [
             0.0,
@@ -516,6 +517,7 @@
           ]
         },
         "east": {
+          "cullface": "east",
           "texture": "#all",
           "uv": [
             0.0,
@@ -525,6 +527,7 @@
           ]
         },
         "north": {
+          "cullface": "north",
           "texture": "#all",
           "uv": [
             0.0,
@@ -534,6 +537,7 @@
           ]
         },
         "south": {
+          "cullface": "south",
           "texture": "#all",
           "uv": [
             0.0,
@@ -543,6 +547,7 @@
           ]
         },
         "up": {
+          "cullface": "up",
           "texture": "#all",
           "uv": [
             0.0,
@@ -552,6 +557,7 @@
           ]
         },
         "west": {
+          "cullface": "west",
           "texture": "#all",
           "uv": [
             0.0,
@@ -580,6 +586,12 @@
   "textures": {
     "0": "thestaff:item/purple_staff",
     "all": "minecraft:block/copper_block",
-    "particle": "thestaff:item/purple_staff"
+    "down": "#all",
+    "east": "#all",
+    "north": "#all",
+    "particle": "thestaff:item/purple_staff",
+    "south": "#all",
+    "up": "#all",
+    "west": "#all"
   }
 }

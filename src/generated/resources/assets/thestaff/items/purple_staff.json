@@ -12,23 +12,16 @@
       {
         "model": {
           "type": "minecraft:model",
-          "model": "thestaff:item/purple_staff_copper_block"
+          "model": "thestaff:item/purple_staff_brewing_stand"
         },
-        "when": "minecraft:copper_block"
+        "when": "minecraft:brewing_stand"
       },
       {
         "model": {
           "type": "minecraft:model",
-          "model": "thestaff:item/purple_staff_stone_slab"
+          "model": "thestaff:item/purple_staff_grass_block"
         },
-        "when": "minecraft:stone_slab"
-      },
-      {
-        "model": {
-          "type": "minecraft:model",
-          "model": "thestaff:item/purple_staff_gold_block"
-        },
-        "when": "minecraft:gold_block"
+        "when": "minecraft:grass_block"
       },
       {
         "model": {
@@ -36,13 +29,6 @@
           "model": "thestaff:item/purple_staff_cake"
         },
         "when": "minecraft:cake"
-      },
-      {
-        "model": {
-          "type": "minecraft:model",
-          "model": "thestaff:item/purple_staff_obsidian"
-        },
-        "when": "minecraft:obsidian"
       },
       {
         "model": {
@@ -61,16 +47,16 @@
       {
         "model": {
           "type": "minecraft:model",
-          "model": "thestaff:item/purple_staff_grass_block"
+          "model": "thestaff:item/purple_staff_gold_block"
         },
-        "when": "minecraft:grass_block"
+        "when": "minecraft:gold_block"
       },
       {
         "model": {
           "type": "minecraft:model",
-          "model": "thestaff:item/purple_staff_diamond_block"
+          "model": "thestaff:item/purple_staff_copper_block"
         },
-        "when": "minecraft:diamond_block"
+        "when": "minecraft:copper_block"
       },
       {
         "model": {
@@ -82,9 +68,23 @@
       {
         "model": {
           "type": "minecraft:model",
-          "model": "thestaff:item/purple_staff_brewing_stand"
+          "model": "thestaff:item/purple_staff_diamond_block"
         },
-        "when": "minecraft:brewing_stand"
+        "when": "minecraft:diamond_block"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "thestaff:item/purple_staff_obsidian"
+        },
+        "when": "minecraft:obsidian"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "thestaff:item/purple_staff_stone_slab"
+        },
+        "when": "minecraft:stone_slab"
       }
     ],
     "fallback": {

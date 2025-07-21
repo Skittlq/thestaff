@@ -508,7 +508,7 @@
       "faces": {
         "down": {
           "cullface": "down",
-          "texture": "#all",
+          "texture": "#side",
           "uv": [
             0.0,
             0.0,
@@ -518,7 +518,7 @@
         },
         "east": {
           "cullface": "east",
-          "texture": "#all",
+          "texture": "#side",
           "uv": [
             0.0,
             0.0,
@@ -528,7 +528,7 @@
         },
         "north": {
           "cullface": "north",
-          "texture": "#all",
+          "texture": "#front",
           "uv": [
             0.0,
             0.0,
@@ -538,7 +538,7 @@
         },
         "south": {
           "cullface": "south",
-          "texture": "#all",
+          "texture": "#back",
           "uv": [
             0.0,
             0.0,
@@ -548,7 +548,7 @@
         },
         "up": {
           "cullface": "up",
-          "texture": "#all",
+          "texture": "#side",
           "uv": [
             0.0,
             0.0,
@@ -558,7 +558,7 @@
         },
         "west": {
           "cullface": "west",
-          "texture": "#all",
+          "texture": "#side",
           "uv": [
             0.0,
             0.0,
@@ -585,13 +585,15 @@
   ],
   "textures": {
     "0": "thestaff:item/purple_staff",
-    "all": "minecraft:block/gold_block",
-    "down": "#all",
-    "east": "#all",
-    "north": "#all",
+    "back": "minecraft:block/command_block_back",
+    "down": "#side",
+    "east": "#side",
+    "front": "minecraft:block/command_block_front",
+    "north": "#front",
     "particle": "thestaff:item/purple_staff",
-    "south": "#all",
-    "up": "#all",
-    "west": "#all"
+    "side": "minecraft:block/command_block_side",
+    "south": "#back",
+    "up": "#side",
+    "west": "#side"
   }
 }
