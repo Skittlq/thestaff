@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "thestaff:item/purple_staff_empty",
+    "model": {
+      "type": "thestaff:special_staff_renderer"
+    }
+  }
+}

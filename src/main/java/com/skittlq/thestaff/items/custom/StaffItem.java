@@ -137,7 +137,7 @@ public class StaffItem extends Item {
     }
 
     @Nullable
-    private static ResourceLocation getStoredBlockId(ItemStack stack) {
+    public static ResourceLocation getStoredBlockId(ItemStack stack) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data != null) {
             CompoundTag tag = data.copyTag();
