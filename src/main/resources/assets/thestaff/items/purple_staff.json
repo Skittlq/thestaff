@@ -1,9 +1,12 @@
 {
   "model": {
-    "type": "minecraft:special",
-    "base": "thestaff:item/purple_staff_empty",
-    "model": {
-      "type": "thestaff:special_staff_renderer"
-    }
+    "type": "minecraft:composite",
+    "models": [
+      { "type": "minecraft:model",
+        "model": "thestaff:item/purple_staff" },
+      { "type": "minecraft:special",
+        "base": "minecraft:item/generated",
+        "model": { "type": "thestaff:staff_block_slot" } }
+    ]
   }
 }

@@ -36,7 +36,7 @@ public class StaffModelProvider implements DataProvider {
         return lookupProvider.thenCompose(provider -> {
             Set<Item> allowedItems = new HashSet<>(ALLOWED_ITEMS);
 
-            ResourceLocation emptyStaffModelLoc = ResourceLocation.fromNamespaceAndPath("thestaff", "models/item/purple_staff_empty.json");
+            ResourceLocation emptyStaffModelLoc = ResourceLocation.fromNamespaceAndPath("thestaff", "models/item/purple_staff.json");
             JsonObject staffTemplate = loadModel(emptyStaffModelLoc);
 
             if (staffTemplate == null) {

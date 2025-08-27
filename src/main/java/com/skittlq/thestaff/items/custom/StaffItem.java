@@ -1,5 +1,6 @@
 package com.skittlq.thestaff.items.custom;
 
+import com.mojang.logging.LogUtils;
 import com.skittlq.thestaff.abilities.StaffAbilities;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -24,6 +25,7 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.state.BlockState;
+import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
@@ -67,20 +69,36 @@ public class StaffItem extends Item {
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (level.isClientSide) return InteractionResult.PASS;
 
-        ItemStack mainHand = player.getMainHandItem();
-        ItemStack offHand = player.getOffhandItem();
+        ItemStack staff = player.getItemInHand(hand);                         // the stack being used
+        if (staff.getItem() != this) return InteractionResult.PASS;           // safety
 
-        if (offHand.getItem() != this) return InteractionResult.PASS;
+        InteractionHand otherHand = (hand == InteractionHand.MAIN_HAND)
+                ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+        ItemStack other = player.getItemInHand(otherHand);
 
+        // Ability use (no shift)
+        var blockId = getStoredBlockId(staff);
+        if (blockId != null && !player.isShiftKeyDown()) {
+            InteractionResult result = StaffAbilities.get(blockId).onRightClick(level, player, hand);
+            if (result != InteractionResult.PASS) return result;
+        }
+
+        // From here on, shift-only mechanics (store / extract)
         if (!player.isShiftKeyDown()) return InteractionResult.PASS;
 
-        if (!mainHand.isEmpty() && mainHand.getItem() instanceof BlockItem && !hasStoredBlock(offHand)) {
-            ResourceLocation id = BuiltInRegistries.ITEM.getKey(mainHand.getItem());
-            if (mainHand.getItem().builtInRegistryHolder().is(ALLOWED_BLOCKS_TAG)) {
+        if (player.getOffhandItem().getItem() != this) {
+            return InteractionResult.PASS;
+        }
+
+
+        // Store a block from the other hand into the staff
+        if (!other.isEmpty() && other.getItem() instanceof BlockItem && !hasStoredBlock(staff)) {
+            if (other.getItem().builtInRegistryHolder().is(ALLOWED_BLOCKS_TAG)) {
+                ResourceLocation id = BuiltInRegistries.ITEM.getKey(other.getItem());
                 CompoundTag tag = new CompoundTag();
                 tag.putString(BLOCK_ID_KEY, id.toString());
-                offHand.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-                mainHand.shrink(1);
+                staff.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                other.shrink(1);
                 return InteractionResult.CONSUME;
             } else {
                 player.displayClientMessage(Component.literal("The Staff Rejects This Block."), true);
@@ -88,13 +106,14 @@ public class StaffItem extends Item {
             }
         }
 
-        if (mainHand.isEmpty() && hasStoredBlock(offHand)) {
-            ItemStack stored = getStoredBlock(offHand);
+        // Extract the stored block from the staff into the other hand
+        if (other.isEmpty() && hasStoredBlock(staff)) {
+            ItemStack stored = getStoredBlock(staff);
             if (!stored.isEmpty() && stored.getItem() != Items.AIR) {
-                player.setItemInHand(InteractionHand.MAIN_HAND, stored);
-
-                CompoundTag tag = new CompoundTag();
-                offHand.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                player.setItemInHand(otherHand, stored);
+                // Clear the component (use remove(...) if available in your mappings)
+                // staff.remove(DataComponents.CUSTOM_DATA);
+                staff.set(DataComponents.CUSTOM_DATA, CustomData.of(new CompoundTag()));
                 return InteractionResult.CONSUME;
             }
         }
@@ -102,51 +121,35 @@ public class StaffItem extends Item {
         return InteractionResult.PASS;
     }
 
-    private static CompoundTag getOrCreateCustomDataTag(ItemStack stack) {
+    private static boolean hasStoredBlock(ItemStack stack) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        return data != null ? data.copyTag() : new CompoundTag();
+        if (data == null) return false;
+        CompoundTag tag = data.copyTag();
+        return tag.contains(BLOCK_ID_KEY) && tag.getString(BLOCK_ID_KEY).isPresent();
     }
 
-    private static boolean hasStoredBlock(ItemStack stack) {
-        CompoundTag tag = getOrCreateCustomDataTag(stack);
-        return tag.contains(BLOCK_ID_KEY);
+    public static @Nullable ResourceLocation getStoredBlockId(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) return null;
+
+        CompoundTag tag = data.copyTag();
+        return tag.getString(BLOCK_ID_KEY)
+                .map(ResourceLocation::tryParse)
+                .orElse(null);
     }
 
     public static ItemStack getStoredBlock(ItemStack stack) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        if (data != null) {
-            CompoundTag tag = data.copyTag();
-            if (tag.contains(BLOCK_ID_KEY)) {
-                var blockIdOpt = tag.getString(BLOCK_ID_KEY);
-                if (blockIdOpt.isPresent()) {
-                    String blockId = blockIdOpt.get();
-                    ResourceLocation id = ResourceLocation.tryParse(blockId);
-                    if (id != null) {
-                        var holderOpt = BuiltInRegistries.ITEM.get(id);
-                        if (holderOpt.isPresent()) {
-                            Item item = holderOpt.get().value();
-                            if (item != null && item != Items.AIR) {
-                                return new ItemStack(item, 1);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return ItemStack.EMPTY;
-    }
+        if (data == null) return ItemStack.EMPTY;
 
-    @Nullable
-    public static ResourceLocation getStoredBlockId(ItemStack stack) {
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        if (data != null) {
-            CompoundTag tag = data.copyTag();
-            var opt = tag.getString(BLOCK_ID_KEY);
-            if (opt.isPresent()) {
-                return ResourceLocation.tryParse(opt.get());
-            }
-        }
-        return null;
+        CompoundTag tag = data.copyTag();
+        return tag.getString(BLOCK_ID_KEY)
+                .map(ResourceLocation::tryParse)
+                .flatMap(BuiltInRegistries.ITEM::get)
+                .map(holder -> holder.value())
+                .filter(item -> item != Items.AIR)
+                .map(item -> new ItemStack(item, 1))
+                .orElse(ItemStack.EMPTY);
     }
 
     @Override

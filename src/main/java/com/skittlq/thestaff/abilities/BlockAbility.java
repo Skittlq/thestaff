@@ -1,6 +1,7 @@
 package com.skittlq.thestaff.abilities;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -31,4 +32,12 @@ public interface BlockAbility {
     }
 
     default void onTick(Level level, Player player, BlockPos pos, ItemStack staff) {}
+
+    default InteractionResult onRightClick(Level level, Player player, InteractionHand hand) {
+        return InteractionResult.PASS;
+    }
+
+    default InteractionResult onShiftRightClick(Level level, Player player, InteractionHand hand) {
+        return InteractionResult.PASS;
+    }
 }

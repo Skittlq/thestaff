@@ -1,8 +1,6 @@
 package com.skittlq.thestaff;
 
-import com.skittlq.thestaff.rendering.ExampleSpecialRenderer;
-import com.skittlq.thestaff.rendering.StaffItemRendererUnbaked;
-import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import com.skittlq.thestaff.rendering.StaffSpecialRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -22,10 +20,8 @@ public class TheStaffClient {
     }
 
     @SubscribeEvent
-    public static void registerItemModels(RegisterItemModelsEvent event) {
-        event.register(
-                ResourceLocation.fromNamespaceAndPath("thestaff", "block_staff"),
-                StaffItemRendererUnbaked.MAP_CODEC
-        );
+    public static void registerSpecialRenderers(RegisterSpecialModelRendererEvent e) {
+        e.register(ResourceLocation.fromNamespaceAndPath("thestaff","staff_block_slot"),
+                StaffSpecialRenderer.Unbaked.MAP_CODEC);
     }
 }

@@ -78,23 +78,25 @@ public class NetheriteBlockAbility implements BlockAbility {
     }
 
     private void scheduleBatchDestruction(ServerLevel level, Queue<BlockPos> targets) {
-        level.getServer().execute(() -> {
-            new Timer().scheduleAtFixedRate(new TimerTask() {
-                @Override
-                public void run() {
-                    int count = 0;
-                    while (!targets.isEmpty() && count++ < BLOCKS_PER_TICK) {
+        var server = level.getServer();
+
+        new Timer(true).scheduleAtFixedRate(new TimerTask() {
+            @Override public void run() {
+                // Bounce the actual work onto the server thread:
+                server.execute(() -> {
+                    int processed = 0;
+                    while (!targets.isEmpty() && processed++ < BLOCKS_PER_TICK) {
                         BlockPos pos = targets.poll();
-                        if (pos != null) {
+                        if (pos != null && level.isLoaded(pos)) { // sanity
                             level.destroyBlock(pos, false);
                         }
                     }
                     if (targets.isEmpty()) {
-                        this.cancel();
+                        cancel(); // stop the TimerTask
                     }
-                }
-            }, 0, 50);
-        });
+                });
+            }
+        }, 0L, 50L); // ~every 2.5 ticks at 20 TPS; adjust if you like
     }
 
     private static float interpolateTickRate(float fraction) {

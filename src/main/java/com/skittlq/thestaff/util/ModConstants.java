@@ -14,12 +14,7 @@ public class ModConstants {
             Items.COPPER_BLOCK,
             Items.COAL_BLOCK,
             Items.OBSIDIAN,
-            Items.COMMAND_BLOCK,
-            Items.GRASS_BLOCK,
-            Items.STONE_SLAB,
-            Items.CAKE,
-            Items.BREWING_STAND
-
+            Items.CAKE
     );
 
 }
