@@ -101,6 +101,13 @@ public class StaffItem extends Item {
                 }
 
             if (other.getItem().builtInRegistryHolder().is(ALLOWED_BLOCKS_TAG)) {
+                if (hasStoredBlock(stack)) {
+                    // swap out block in staff
+                    ItemStack stored = getStoredBlock(stack);
+                    if (!stored.isEmpty() && stored.getItem() != Items.AIR) {
+                        access.set(stored);
+                    }
+                }
                 ResourceLocation id = BuiltInRegistries.ITEM.getKey(other.getItem());
                 CompoundTag tag = new CompoundTag();
                 tag.putString(BLOCK_ID_KEY, id.toString());
@@ -114,12 +121,6 @@ public class StaffItem extends Item {
         }
 
         return super.overrideOtherStackedOnMe(stack, other, slot, action, player, access);
-    }
-
-    @Override
-    public boolean overrideStackedOnOther(ItemStack stack, Slot slot, ClickAction action, Player player) {
-//        player.displayClientMessage(stack.getDisplayName(), false);
-        return super.overrideStackedOnOther(stack, slot, action, player);
     }
 
     @Override

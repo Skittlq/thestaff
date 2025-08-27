@@ -15,7 +15,7 @@ public class ModItems {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(TheStaff.MODID);
 
     public static final DeferredItem<Item> PURPLE_STAFF = ITEMS.registerItem("purple_staff",
-            (properties) -> new StaffItem(properties.fireResistant().rarity(Rarity.EPIC)));
+            (properties) -> new StaffItem(properties.fireResistant().rarity(Rarity.EPIC).stacksTo(1)));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
