@@ -14,7 +14,8 @@ public class ModConstants {
             Items.COPPER_BLOCK,
             Items.COAL_BLOCK,
             Items.OBSIDIAN,
-            Items.CAKE
+            Items.CAKE,
+            Items.TNT
     );
 
 }

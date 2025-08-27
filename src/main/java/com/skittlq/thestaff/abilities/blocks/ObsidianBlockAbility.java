@@ -1,6 +1,7 @@
     package com.skittlq.thestaff.abilities.blocks;
 
     import com.skittlq.thestaff.abilities.BlockAbility;
+    import com.skittlq.thestaff.util.AbilityTrigger;
     import net.minecraft.core.BlockPos;
     import net.minecraft.core.Direction;
     import net.minecraft.world.InteractionResult;
@@ -61,5 +62,13 @@
         @Override
         public InteractionResult onRightClickBlock(Level level, Player player, BlockPos pos, ItemStack staff) {
             return BlockAbility.super.onRightClickBlock(level, player, pos, staff);
+        }
+
+        @Override
+        public String getDescription(AbilityTrigger trigger) {
+            return switch (trigger) {
+                case BREAK_BLOCK -> "Pushes blocks away from you.";
+                default -> BlockAbility.super.getDescription(trigger);
+            };
         }
     }

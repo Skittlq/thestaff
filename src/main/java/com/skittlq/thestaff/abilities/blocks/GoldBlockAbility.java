@@ -1,6 +1,7 @@
 package com.skittlq.thestaff.abilities.blocks;
 
 import com.skittlq.thestaff.abilities.BlockAbility;
+import com.skittlq.thestaff.util.AbilityTrigger;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -128,4 +129,12 @@ public class GoldBlockAbility implements BlockAbility {
         }, 0, totalMillis / (rampSteps + (holdMillis * rampSteps / rampMillis)));
     }
 
+    @Override
+    public String getDescription(AbilityTrigger trigger) {
+        return switch (trigger) {
+            case BREAK_BLOCK -> "Destroy small chunks of land.";
+            case HIT_ENTITY -> "Deal 60 damage and small knockback.";
+            default -> BlockAbility.super.getDescription(trigger);
+        };
+    }
 }

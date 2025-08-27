@@ -1,7 +1,9 @@
 package com.skittlq.thestaff.items.custom;
 
 import com.mojang.logging.LogUtils;
+import com.skittlq.thestaff.abilities.BlockAbility;
 import com.skittlq.thestaff.abilities.StaffAbilities;
+import com.skittlq.thestaff.util.AbilityTrigger;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -10,11 +12,10 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickAction;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
@@ -28,7 +29,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class StaffItem extends Item {
     private static final String BLOCK_ID_KEY = "StaffStoredBlockId";
@@ -38,32 +42,85 @@ public class StaffItem extends Item {
         super(properties);
     }
 
-    @Override
-    public Component getName(ItemStack stack) {
-        var id = getStoredBlockId(stack);
-        if (id != null) {
-            var itemOpt = BuiltInRegistries.ITEM.get(id);
-            if (itemOpt.isPresent()) {
-                Item item = itemOpt.get().value();;
-                Component blockName = item.getName();
-                return Component.translatable("item.thestaff.purple_staff.with_block", blockName);
-            }
-        }
-        return Component.translatable("item.thestaff.purple_staff");
-    }
+
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltipAdder, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
+                                Consumer<Component> tooltipAdder, TooltipFlag flag) {
         var id = getStoredBlockId(stack);
         Item block = getStoredBlock(stack).getItem();
         if (id != null) {
             BuiltInRegistries.ITEM.get(id).ifPresent(item -> {
                 Component name = block.getName();
                 tooltipAdder.accept(Component.literal("Holding ").append(name).withStyle(ChatFormatting.GRAY));
+                tooltipAdder.accept(Component.empty());
+
+                BlockAbility ability = StaffAbilities.get(id);
+                if (ability != null) {
+                    List<AbilityTrigger> described = Arrays.stream(AbilityTrigger.values())
+                            .filter(t -> {
+                                String d = ability.getDescription(t);
+                                return d != null && !d.isEmpty();
+                            })
+                            .toList();
+
+                    for (int i = 0; i < described.size(); i++) {
+                        AbilityTrigger trigger = described.get(i);
+                        String desc = ability.getDescription(trigger);
+
+                        String pretty = Arrays.stream(trigger.toString().toLowerCase().split("_"))
+                                .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1))
+                                .collect(Collectors.joining(" "));
+
+                        tooltipAdder.accept(Component.literal(pretty.equals("Tick") ? "In Hand" : pretty).withStyle(ChatFormatting.GOLD));
+                        tooltipAdder.accept(Component.literal(desc).withStyle(ChatFormatting.GRAY));
+
+                        if (i < described.size() - 1) {
+                            tooltipAdder.accept(Component.empty());
+                        }
+                    }
+                }
+
             });
         }
     }
 
+    @Override
+    public boolean overrideOtherStackedOnMe(ItemStack stack, ItemStack other, Slot slot, ClickAction action, Player player, SlotAccess access) {
+
+        // if action == Secondary
+        if (action == ClickAction.SECONDARY) {
+                if (other.isEmpty() && hasStoredBlock(stack)) {
+                    // Take block out of staff
+                    ItemStack stored = getStoredBlock(stack);
+                    if (!stored.isEmpty() && stored.getItem() != Items.AIR) {
+                        access.set(stored);
+                        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(new CompoundTag()));
+                        return true;
+                    }
+                }
+
+            if (other.getItem().builtInRegistryHolder().is(ALLOWED_BLOCKS_TAG)) {
+                ResourceLocation id = BuiltInRegistries.ITEM.getKey(other.getItem());
+                CompoundTag tag = new CompoundTag();
+                tag.putString(BLOCK_ID_KEY, id.toString());
+                other.shrink(1);
+                stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                return true;
+            } else {
+                player.displayClientMessage(Component.literal("The Staff Rejects This Block."), true);
+                return true;
+            }
+        }
+
+        return super.overrideOtherStackedOnMe(stack, other, slot, action, player, access);
+    }
+
+    @Override
+    public boolean overrideStackedOnOther(ItemStack stack, Slot slot, ClickAction action, Player player) {
+//        player.displayClientMessage(stack.getDisplayName(), false);
+        return super.overrideStackedOnOther(stack, slot, action, player);
+    }
 
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
@@ -90,7 +147,6 @@ public class StaffItem extends Item {
             return InteractionResult.PASS;
         }
 
-
         // Store a block from the other hand into the staff
         if (!other.isEmpty() && other.getItem() instanceof BlockItem && !hasStoredBlock(staff)) {
             if (other.getItem().builtInRegistryHolder().is(ALLOWED_BLOCKS_TAG)) {
@@ -111,8 +167,6 @@ public class StaffItem extends Item {
             ItemStack stored = getStoredBlock(staff);
             if (!stored.isEmpty() && stored.getItem() != Items.AIR) {
                 player.setItemInHand(otherHand, stored);
-                // Clear the component (use remove(...) if available in your mappings)
-                // staff.remove(DataComponents.CUSTOM_DATA);
                 staff.set(DataComponents.CUSTOM_DATA, CustomData.of(new CompoundTag()));
                 return InteractionResult.CONSUME;
             }
@@ -215,11 +269,8 @@ public class StaffItem extends Item {
 
     @Override
     public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, @org.jetbrains.annotations.Nullable EquipmentSlot slot) {
-
         var id = getStoredBlockId(stack);
         if (id != null && entity instanceof Player player) {
-            player.setForcedPose(Pose.SWIMMING);
-
             StaffAbilities.get(id).onTick(level, player, player.blockPosition(), stack);
         }
 

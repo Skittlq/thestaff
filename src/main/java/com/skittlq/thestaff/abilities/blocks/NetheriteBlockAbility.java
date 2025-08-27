@@ -1,6 +1,7 @@
 package com.skittlq.thestaff.abilities.blocks;
 
 import com.skittlq.thestaff.abilities.BlockAbility;
+import com.skittlq.thestaff.util.AbilityTrigger;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -132,4 +133,12 @@ public class NetheriteBlockAbility implements BlockAbility {
         }, 0, totalMillis / (rampSteps + (holdMillis * rampSteps / rampMillis)));
     }
 
+    @Override
+    public String getDescription(AbilityTrigger trigger) {
+        return switch (trigger) {
+            case BREAK_BLOCK -> "Destroy huge chunks of land.";
+            case HIT_ENTITY -> "Deal 500 damage and huge knockback.";
+            default -> BlockAbility.super.getDescription(trigger);
+        };
+    }
 }

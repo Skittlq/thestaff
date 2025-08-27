@@ -18,6 +18,7 @@ public class StaffAbilities {
         register("minecraft:coal_block", new CoalBlockAbility());
         register("minecraft:obsidian", new ObsidianBlockAbility());
         register("minecraft:cake", new CakeAbility());
+        register("minecraft:tnt", new TntAbility());
     }
 
     private static void register(String blockId, BlockAbility ability) {

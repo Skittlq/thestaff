@@ -1,6 +1,7 @@
 package com.skittlq.thestaff.abilities.blocks;
 
 import com.skittlq.thestaff.abilities.BlockAbility;
+import com.skittlq.thestaff.util.AbilityTrigger;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -169,7 +170,15 @@ public class CopperBlockAbility implements BlockAbility {
         BlockAbility.super.onTick(level, player, pos, staff);
     }
 
-
+    @Override
+    public String getDescription(AbilityTrigger trigger) {
+        return switch (trigger) {
+            case TICK -> "You get randomly struck by lightning, but also damage mobs around you in a radius.";
+            case BREAK_BLOCK -> "Destroy tiny chunks of land.";
+            case HIT_ENTITY -> "Deal 30 damage with tiny knockback.";
+            default -> BlockAbility.super.getDescription(trigger);
+        };
+    }
 
 
 }

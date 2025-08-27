@@ -1,5 +1,6 @@
 package com.skittlq.thestaff.abilities;
 
+import com.skittlq.thestaff.util.AbilityTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -40,4 +41,12 @@ public interface BlockAbility {
     default InteractionResult onShiftRightClick(Level level, Player player, InteractionHand hand) {
         return InteractionResult.PASS;
     }
+
+    default String getDescription(AbilityTrigger trigger) {
+        return switch (trigger) {
+            case RIGHT_CLICK, SHIFT_RIGHT_CLICK, RIGHT_CLICK_BLOCK, SHIFT_RIGHT_CLICK_BLOCK, HIT_ENTITY,
+                 SHIFT_HIT_ENTITY, BREAK_BLOCK, SHIFT_BREAK_BLOCK, TICK, MINING_SPEED -> "";
+        };
+    }
+
 }

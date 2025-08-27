@@ -4,7 +4,8 @@
   "package": "com.skittlq.thestaff.mixins",
   "mixins": [
     "FurnaceAccessor",
-    "MinecartFurnaceAccessor"
+    "MinecartFurnaceAccessor",
+    "TntExplosionRadiusAccessor"
   ],
   "client": [],
   "server": []

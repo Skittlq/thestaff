@@ -3,6 +3,7 @@ package com.skittlq.thestaff.abilities.blocks;
 import com.skittlq.thestaff.abilities.BlockAbility;
 import com.skittlq.thestaff.mixins.FurnaceAccessor;
 import com.skittlq.thestaff.mixins.MinecartFurnaceAccessor;
+import com.skittlq.thestaff.util.AbilityTrigger;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -66,5 +67,11 @@ public class CoalBlockAbility implements BlockAbility {
         return 1.0F;
     }
 
-
+    @Override
+    public String getDescription(AbilityTrigger trigger) {
+        return switch (trigger) {
+            case SHIFT_RIGHT_CLICK_BLOCK -> "Ignite a furnace for 2 minutes.";
+            default -> BlockAbility.super.getDescription(trigger);
+        };
+    }
 }
