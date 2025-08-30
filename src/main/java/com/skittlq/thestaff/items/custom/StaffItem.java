@@ -1,13 +1,13 @@
 package com.skittlq.thestaff.items.custom;
 
-import com.mojang.logging.LogUtils;
 import com.skittlq.thestaff.abilities.BlockAbility;
 import com.skittlq.thestaff.abilities.StaffAbilities;
 import com.skittlq.thestaff.util.AbilityTrigger;
+import com.skittlq.thestaff.util.AnimSender;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
@@ -26,7 +26,6 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.state.BlockState;
-import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -41,8 +40,6 @@ public class StaffItem extends Item {
     public StaffItem(Properties properties) {
         super(properties);
     }
-
-
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
@@ -87,11 +84,8 @@ public class StaffItem extends Item {
 
     @Override
     public boolean overrideOtherStackedOnMe(ItemStack stack, ItemStack other, Slot slot, ClickAction action, Player player, SlotAccess access) {
-
-        // if action == Secondary
         if (action == ClickAction.SECONDARY) {
                 if (other.isEmpty() && hasStoredBlock(stack)) {
-                    // Take block out of staff
                     ItemStack stored = getStoredBlock(stack);
                     if (!stored.isEmpty() && stored.getItem() != Items.AIR) {
                         access.set(stored);
@@ -102,7 +96,6 @@ public class StaffItem extends Item {
 
             if (other.getItem().builtInRegistryHolder().is(ALLOWED_BLOCKS_TAG)) {
                 if (hasStoredBlock(stack)) {
-                    // swap out block in staff
                     ItemStack stored = getStoredBlock(stack);
                     if (!stored.isEmpty() && stored.getItem() != Items.AIR) {
                         access.set(stored);
@@ -127,49 +120,58 @@ public class StaffItem extends Item {
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if (level.isClientSide) return InteractionResult.PASS;
 
-        ItemStack staff = player.getItemInHand(hand);                         // the stack being used
-        if (staff.getItem() != this) return InteractionResult.PASS;           // safety
+        ItemStack staff = player.getItemInHand(hand);
+        if (staff.getItem() != this) return InteractionResult.PASS;
 
-        InteractionHand otherHand = (hand == InteractionHand.MAIN_HAND)
-                ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
-        ItemStack other = player.getItemInHand(otherHand);
-
-        // Ability use (no shift)
         var blockId = getStoredBlockId(staff);
-        if (blockId != null && !player.isShiftKeyDown()) {
-            InteractionResult result = StaffAbilities.get(blockId).onRightClick(level, player, hand);
-            if (result != InteractionResult.PASS) return result;
-        }
 
-        // From here on, shift-only mechanics (store / extract)
-        if (!player.isShiftKeyDown()) return InteractionResult.PASS;
+        if (blockId != null) {
+            if (player.isShiftKeyDown()) {
+                if (hand == InteractionHand.MAIN_HAND) {
+                    if (player instanceof ServerPlayer sp) {
+                        AnimSender.play(sp, "staff_cast");
+                    }
 
-        if (player.getOffhandItem().getItem() != this) {
-            return InteractionResult.PASS;
-        }
-
-        // Store a block from the other hand into the staff
-        if (!other.isEmpty() && other.getItem() instanceof BlockItem && !hasStoredBlock(staff)) {
-            if (other.getItem().builtInRegistryHolder().is(ALLOWED_BLOCKS_TAG)) {
-                ResourceLocation id = BuiltInRegistries.ITEM.getKey(other.getItem());
-                CompoundTag tag = new CompoundTag();
-                tag.putString(BLOCK_ID_KEY, id.toString());
-                staff.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-                other.shrink(1);
-                return InteractionResult.CONSUME;
+                    InteractionResult result = StaffAbilities.get(blockId)
+                            .onShiftRightClick(level, player, hand);
+                    if (result != InteractionResult.PASS) return result;
+                }
             } else {
-                player.displayClientMessage(Component.literal("The Staff Rejects This Block."), true);
-                return InteractionResult.FAIL;
+                if (player instanceof ServerPlayer sp) {
+                    AnimSender.play(sp, "staff_cast");
+                }
+
+                InteractionResult result = StaffAbilities.get(blockId)
+                        .onRightClick(level, player, hand);
+                if (result != InteractionResult.PASS) return result;
             }
         }
 
-        // Extract the stored block from the staff into the other hand
-        if (other.isEmpty() && hasStoredBlock(staff)) {
-            ItemStack stored = getStoredBlock(staff);
-            if (!stored.isEmpty() && stored.getItem() != Items.AIR) {
-                player.setItemInHand(otherHand, stored);
-                staff.set(DataComponents.CUSTOM_DATA, CustomData.of(new CompoundTag()));
-                return InteractionResult.CONSUME;
+        if (hand == InteractionHand.OFF_HAND && player.isShiftKeyDown()) {
+            InteractionHand otherHand = InteractionHand.MAIN_HAND;
+            ItemStack other = player.getItemInHand(otherHand);
+
+            if (!other.isEmpty() && other.getItem() instanceof BlockItem && !hasStoredBlock(staff)) {
+                if (other.getItem().builtInRegistryHolder().is(ALLOWED_BLOCKS_TAG)) {
+                    ResourceLocation id = BuiltInRegistries.ITEM.getKey(other.getItem());
+                    CompoundTag tag = new CompoundTag();
+                    tag.putString(BLOCK_ID_KEY, id.toString());
+                    staff.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+                    other.shrink(1);
+                    return InteractionResult.CONSUME;
+                } else {
+                    player.displayClientMessage(Component.literal("The Staff Rejects This Block."), true);
+                    return InteractionResult.FAIL;
+                }
+            }
+
+            if (other.isEmpty() && hasStoredBlock(staff)) {
+                ItemStack stored = getStoredBlock(staff);
+                if (!stored.isEmpty() && stored.getItem() != Items.AIR) {
+                    player.setItemInHand(otherHand, stored);
+                    staff.set(DataComponents.CUSTOM_DATA, CustomData.of(new CompoundTag()));
+                    return InteractionResult.CONSUME;
+                }
             }
         }
 
@@ -227,21 +229,6 @@ public class StaffItem extends Item {
             }
         }
         super.hurtEnemy(stack, target, attacker);
-    }
-
-    @Override
-    public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity entity) {
-        if (entity instanceof Player player) {
-            var id = getStoredBlockId(stack);
-            if (id != null) {
-                if (player.isShiftKeyDown()) {
-                    StaffAbilities.get(id).onShiftBreakBlock(level, player, pos, stack);
-                } else {
-                    StaffAbilities.get(id).onBreakBlock(level, player, pos, stack);
-                }
-            }
-        }
-        return super.mineBlock(stack, level, state, pos, entity);
     }
 
     @Override

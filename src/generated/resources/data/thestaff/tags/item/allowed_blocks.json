@@ -8,6 +8,8 @@
     "minecraft:coal_block",
     "minecraft:obsidian",
     "minecraft:cake",
-    "minecraft:tnt"
+    "minecraft:tnt",
+    "thestaff:minecraft",
+    "minecraft:grass_block"
   ]
 }

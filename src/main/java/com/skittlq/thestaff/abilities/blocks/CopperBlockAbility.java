@@ -2,11 +2,10 @@ package com.skittlq.thestaff.abilities.blocks;
 
 import com.skittlq.thestaff.abilities.BlockAbility;
 import com.skittlq.thestaff.util.AbilityTrigger;
-import net.minecraft.commands.CommandSourceStack;
+import com.skittlq.thestaff.util.ScheduleBatchDestruction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -16,10 +15,6 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import static com.skittlq.thestaff.util.TickCommand.setTickingRate;
 
 public class CopperBlockAbility implements BlockAbility {
     private static final int BLOCKS_PER_TICK = 200;
@@ -65,7 +60,7 @@ public class CopperBlockAbility implements BlockAbility {
             }
         }
 
-        scheduleBatchDestruction((ServerLevel) level, targets);
+        ScheduleBatchDestruction.schedule((ServerLevel) level, targets, BLOCKS_PER_TICK, player);
     }
 
     @Override
@@ -78,92 +73,41 @@ public class CopperBlockAbility implements BlockAbility {
         return 500F;
     }
 
-    private void scheduleBatchDestruction(ServerLevel level, Queue<BlockPos> targets) {
-        level.getServer().execute(() -> {
-            new Timer().scheduleAtFixedRate(new TimerTask() {
-                @Override
-                public void run() {
-                    int count = 0;
-                    while (!targets.isEmpty() && count++ < BLOCKS_PER_TICK) {
-                        BlockPos pos = targets.poll();
-                        if (pos != null) {
-                            level.destroyBlock(pos, false);
-                        }
-                    }
-                    if (targets.isEmpty()) {
-                        this.cancel();
-                    }
-                }
-            }, 0, 50);
-        });
-    }
-
-    private static float interpolateTickRate(float fraction) {
-        fraction = Math.max(0.0f, Math.min(1.0f, fraction));
-        double base = 5.0;
-        return (float) (1.0 + (20.0 - 1.0) * (Math.pow(base, fraction) - 1) / (base - 1));
-    }
-
-    public static void smoothTickRateReset(CommandSourceStack source, int holdMillis, int rampMillis, ServerLevel level) {
-        final int rampSteps = 40;
-        final Timer timer = new Timer("TickRateInterpolator", false);
-        final long totalMillis = holdMillis + rampMillis;
-        final long startTime = System.currentTimeMillis();
-
-        timer.scheduleAtFixedRate(new TimerTask() {
-            int currentStep = 0;
-            @Override
-            public void run() {
-                long elapsed = System.currentTimeMillis() - startTime;
-                if (elapsed < holdMillis) {
-                    setTickingRate(source, 1);
-
-                } else {
-                    float fraction = Math.min(1.0f, (float) (elapsed - holdMillis) / rampMillis);
-                    float tickRate = interpolateTickRate(fraction);
-                    setTickingRate(source, tickRate);
-                }
-                currentStep++;
-                if (elapsed >= totalMillis) {
-                    timer.cancel();
-                }
-            }
-        }, 0, totalMillis / (rampSteps + (holdMillis * rampSteps / rampMillis)));
-    }
-
     @Override
     public void onTick(Level level, Player player, BlockPos pos, ItemStack staff) {
         if (!level.isClientSide) {
             boolean holdingStaff = player.getMainHandItem() == staff || player.getOffhandItem() == staff;
             if (holdingStaff && level.getGameTime() % 20 == 0) {
-                if (level.random.nextInt(10) == 0) {
-                    var lightning = new net.minecraft.world.entity.LightningBolt(
-                            net.minecraft.world.entity.EntityType.LIGHTNING_BOLT,
-                            level
-                    );
-                    lightning.setPos(player.position());
-                    level.addFreshEntity(lightning);
+                if (level.isThundering()) {
+                    if (level.random.nextInt(10) == 0) {
+                        var lightning = new net.minecraft.world.entity.LightningBolt(
+                                net.minecraft.world.entity.EntityType.LIGHTNING_BOLT,
+                                level
+                        );
+                        lightning.setPos(player.position());
+                        level.addFreshEntity(lightning);
 
-                    ((ServerLevel) level).sendParticles(
-                            net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK,
-                            player.getX(), player.getY() + 1.0, player.getZ(),
-                            100, 0, 0, 0, 10
-                    );
+                        ((ServerLevel) level).sendParticles(
+                                net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK,
+                                player.getX(), player.getY() + 1.0, player.getZ(),
+                                100, 0, 0, 0, 10
+                        );
 
-                    double radius = 7.0;
-                    var area = new net.minecraft.world.phys.AABB(
-                            player.getX() - radius, player.getY() - radius, player.getZ() - radius,
-                            player.getX() + radius, player.getY() + radius, player.getZ() + radius
-                    );
-                    for (Entity entity : level.getEntities(player, area, e -> e instanceof LivingEntity && e != player)) {
-                        level.playSound(null, entity.blockPosition(), net.minecraft.sounds.SoundEvents.LIGHTNING_BOLT_IMPACT,
-                                net.minecraft.sounds.SoundSource.WEATHER, 1.0F, 1.0F);
+                        double radius = 7.0;
+                        var area = new net.minecraft.world.phys.AABB(
+                                player.getX() - radius, player.getY() - radius, player.getZ() - radius,
+                                player.getX() + radius, player.getY() + radius, player.getZ() + radius
+                        );
+                        for (Entity entity : level.getEntities(player, area, e -> e instanceof LivingEntity && e != player)) {
+                            level.playSound(null, entity.blockPosition(), net.minecraft.sounds.SoundEvents.LIGHTNING_BOLT_IMPACT,
+                                    net.minecraft.sounds.SoundSource.WEATHER, 1.0F, 1.0F);
+                            entity.setRemainingFireTicks(60);
 
-                        entity.hurt(level.damageSources().lightningBolt(), 10.0f);
+                            entity.hurt(level.damageSources().lightningBolt(), 10.0f);
 
-                        entity.setRemainingFireTicks(60);
+                        }
+
                     }
-
                 }
             }
         }
@@ -173,7 +117,7 @@ public class CopperBlockAbility implements BlockAbility {
     @Override
     public String getDescription(AbilityTrigger trigger) {
         return switch (trigger) {
-            case TICK -> "You get randomly struck by lightning, but also damage mobs around you in a radius.";
+            case TICK -> "You are more likely to be struck by lightning during thunderstorms, but also damage mobs around you in a radius.";
             case BREAK_BLOCK -> "Destroy tiny chunks of land.";
             case HIT_ENTITY -> "Deal 30 damage with tiny knockback.";
             default -> BlockAbility.super.getDescription(trigger);

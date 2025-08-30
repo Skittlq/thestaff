@@ -45,13 +45,12 @@ public class StaffModelProvider implements DataProvider {
             }
 
             float blockOffsetX = 4, blockOffsetY = 19, blockOffsetZ = 4;
-            float socketSize = 8f; // The size for [4,19,4]→[12,27,12] (all axes)
+            float socketSize = 8f;
             List<CompletableFuture<?>> tasks = new ArrayList<>();
 
             for (Item item : allowedItems) {
                 ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
 
-                // 1. Load blockstate
                 ResourceLocation blockstateLoc = ResourceLocation.fromNamespaceAndPath(itemId.getNamespace(), "blockstates/" + itemId.getPath() + ".json");
                 JsonObject blockstate = loadJson(blockstateLoc);
                 if (blockstate == null) {
@@ -59,14 +58,12 @@ public class StaffModelProvider implements DataProvider {
                     continue;
                 }
 
-                // 2. Get referenced model(s) (default/false conditions)
                 Set<ResourceLocation> modelLocs = getDefaultModelLocations(blockstate, itemId);
                 if (modelLocs.isEmpty()) {
                     System.out.println("[StaffModelProvider] No models found in blockstate for " + itemId);
                     continue;
                 }
 
-                // 3. Flatten and merge models
                 MergedModel merged = new MergedModel();
                 for (ResourceLocation modelLoc : modelLocs) {
                     mergeModelRecursive(modelLoc, merged, new HashSet<>());
@@ -76,31 +73,23 @@ public class StaffModelProvider implements DataProvider {
                     continue;
                 }
 
-                // 4. Scale & offset all elements into socket
                 scaleAndOffsetElementsToSocket(merged.elements, blockOffsetX, blockOffsetY, blockOffsetZ, socketSize);
 
-                // 5. Unify textures for faces
                 unifyFaceTexturesSmart(merged.textures, merged.elements);
 
-                // 6. Compose with staff template
                 JsonObject outModel = deepCopy(staffTemplate);
                 JsonObject outTextures = outModel.getAsJsonObject("textures");
-                // Merge in textures, non-destructively
                 for (Map.Entry<String, JsonElement> entry : merged.textures.entrySet()) {
                     if (!outTextures.has(entry.getKey())) outTextures.add(entry.getKey(), entry.getValue());
                 }
-                // Merge in elements
                 JsonArray outElements = outModel.getAsJsonArray("elements");
                 for (JsonElement e : merged.elements) outElements.add(e);
 
-                // 7. Save
                 String modelName = "purple_staff_" + itemId.getPath();
                 Path modelPath = output.getOutputFolder().resolve("assets/thestaff/models/item/" + modelName + ".json");
                 tasks.add(DataProvider.saveStable(cache, outModel, modelPath));
                 System.out.println("[StaffModelProvider] Generated merged model for " + itemId + " as " + modelName);
             }
-
-// --- After generating merged models ---
 
             JsonObject selector = new JsonObject();
             selector.addProperty("type", "minecraft:select");
@@ -127,7 +116,6 @@ public class StaffModelProvider implements DataProvider {
             fallback.addProperty("model", "thestaff:item/purple_staff_empty");
             selector.add("fallback", fallback);
 
-// Top-level object
             JsonObject out = new JsonObject();
             out.add("model", selector);
 
@@ -137,8 +125,6 @@ public class StaffModelProvider implements DataProvider {
             return CompletableFuture.allOf(tasks.toArray(CompletableFuture[]::new));
         });
     }
-
-    // === UTILITIES ===
 
     private JsonObject loadModel(ResourceLocation loc) {
         return loadJson(loc);
@@ -155,22 +141,18 @@ public class StaffModelProvider implements DataProvider {
         return null;
     }
 
-    // --- Blockstate Parsing ---
     private Set<ResourceLocation> getDefaultModelLocations(JsonObject blockstate, ResourceLocation itemId) {
         Set<ResourceLocation> result = new LinkedHashSet<>();
         if (blockstate.has("variants")) {
             JsonObject variants = blockstate.getAsJsonObject("variants");
-            // Prefer "" key, else use the most "default-looking" key
             if (variants.has("")) {
-                // Unchanged logic for empty key
                 JsonElement v = variants.get("");
                 collectVariantModelLocations(v, itemId, result);
             } else if (variants.size() > 0) {
-                // Try to select by key for cake, grass_block, etc.
                 String key = null;
                 if (variants.has("bites=0")) key = "bites=0";
                 else if (variants.has("snowy=false")) key = "snowy=false";
-                else key = variants.keySet().iterator().next(); // fallback: first
+                else key = variants.keySet().iterator().next();
                 JsonElement v = variants.get(key);
                 collectVariantModelLocations(v, itemId, result);
             }
@@ -182,7 +164,6 @@ public class StaffModelProvider implements DataProvider {
                 if (entry.has("when")) {
                     JsonObject when = entry.getAsJsonObject("when");
                     for (Map.Entry<String, JsonElement> cond : when.entrySet()) {
-                        // Use if explicitly "false"
                         if (!"false".equals(cond.getValue().getAsString())) {
                             use = false;
                         }
@@ -210,7 +191,6 @@ public class StaffModelProvider implements DataProvider {
         }
     }
 
-    // Returns model location relative to its block/item root
     private ResourceLocation modelLocationFromBlock(String modelStr, ResourceLocation fallbackNS) {
         String[] parts = modelStr.split(":");
         String ns = (parts.length > 1) ? parts[0] : fallbackNS.getNamespace();
@@ -218,7 +198,6 @@ public class StaffModelProvider implements DataProvider {
         return ResourceLocation.fromNamespaceAndPath(ns, "models/" + path + ".json");
     }
 
-    // --- Model Flatten & Merge ---
     private static class MergedModel {
         JsonObject textures = new JsonObject();
         JsonArray elements = new JsonArray();
@@ -231,13 +210,11 @@ public class StaffModelProvider implements DataProvider {
         JsonObject model = loadModel(modelLoc);
         if (model == null) return;
 
-        // Merge parent first
         if (model.has("parent")) {
             String parentPath = model.get("parent").getAsString();
             ResourceLocation parentLoc = resolveParentLoc(parentPath, modelLoc);
             mergeModelRecursive(parentLoc, merged, visited);
         }
-        // Merge textures
         if (model.has("textures")) {
             JsonObject tex = model.getAsJsonObject("textures");
             for (Map.Entry<String, JsonElement> e : tex.entrySet()) {
@@ -245,7 +222,6 @@ public class StaffModelProvider implements DataProvider {
                     merged.textures.add(e.getKey(), e.getValue());
             }
         }
-        // Merge elements
         if (model.has("elements")) {
             JsonArray elems = model.getAsJsonArray("elements");
             for (JsonElement e : elems) merged.elements.add(deepCopy(e));
@@ -257,14 +233,12 @@ public class StaffModelProvider implements DataProvider {
             String[] parts = parentPath.split(":", 2);
             return ResourceLocation.fromNamespaceAndPath(parts[0], "models/" + parts[1] + ".json");
         } else {
-            // Relative: same namespace, "models/" prefix
             String ns = modelLoc.getNamespace();
             return ResourceLocation.fromNamespaceAndPath(ns, "models/" + parentPath + ".json");
         }
     }
 
     private void scaleAndOffsetElementsToSocket(JsonArray elements, float offsetX, float offsetY, float offsetZ, float socketSize) {
-        // Find original bounds
         float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, minZ = Float.MAX_VALUE;
         float maxX = Float.MIN_VALUE, maxY = Float.MIN_VALUE, maxZ = Float.MIN_VALUE;
         for (JsonElement elem : elements) {
@@ -281,7 +255,6 @@ public class StaffModelProvider implements DataProvider {
         float sizeX = maxX - minX, sizeY = maxY - minY, sizeZ = maxZ - minZ;
         float scale = socketSize / Math.max(Math.max(sizeX, sizeY), sizeZ);
 
-        // Now, bottom-anchored! Align minY to offsetY, but keep aspect
         for (JsonElement elem : elements) {
             JsonObject cube = elem.getAsJsonObject();
             float[] from = toFloatArray(cube.getAsJsonArray("from"));
@@ -296,7 +269,6 @@ public class StaffModelProvider implements DataProvider {
         }
     }
 
-    // --- Utility: Set all faces' "uv" to [0,0,16,16] ---
     private void resetAllFaceUVs(JsonObject cube) {
         if (!cube.has("faces")) return;
         JsonObject faces = cube.getAsJsonObject("faces");
@@ -310,7 +282,6 @@ public class StaffModelProvider implements DataProvider {
         }
     }
 
-    // --- Texture mapping logic (unchanged, but "smarter") ---
     private void unifyFaceTexturesSmart(JsonObject blockTextures, JsonArray elements) {
         boolean hasAll = blockTextures.has("all");
         boolean hasSide = blockTextures.has("side");
@@ -342,7 +313,6 @@ public class StaffModelProvider implements DataProvider {
                             default: faceObj.addProperty("texture", "#side"); break;
                         }
                     }
-                    // No else: fallback to whatever mapping was present
                 }
             }
         }

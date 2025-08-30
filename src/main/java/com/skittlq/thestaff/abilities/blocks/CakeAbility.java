@@ -39,13 +39,20 @@ public class CakeAbility implements BlockAbility {
         BlockPos bp = BlockPos.containing(spawn);
 
         FallingBlockEntity cake = FallingBlockEntity.fall(server, bp, Blocks.CAKE.defaultBlockState());
-        server.playSound(cake, cake.getX(), cake.getY(), cake.getZ(), SoundEvents.UI_TOAST_IN, SoundSource.BLOCKS, 1.0F, 2.0F);
+        server.playSound(cake, cake.getX(), cake.getY(), cake.getZ(), SoundEvents.UI_TOAST_IN, SoundSource.PLAYERS, 1.0F, 2.0F);
 
+        cake.setHurtsEntities(1, 1);
         cake.dropItem = false;
         cake.setPos(spawn.x, spawn.y, spawn.z);
         cake.setDeltaMovement(look.scale(3).add(0, 0, 0));
+        cake.canUsePortal(true);
 
         return InteractionResult.PASS;
+    }
+
+    @Override
+    public InteractionResult onShiftRightClick(Level level, Player player, InteractionHand hand) {
+        return onRightClick(level, player, player.getUsedItemHand());
     }
 
     @Override

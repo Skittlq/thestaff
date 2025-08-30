@@ -19,6 +19,7 @@ public class StaffAbilities {
         register("minecraft:obsidian", new ObsidianBlockAbility());
         register("minecraft:cake", new CakeAbility());
         register("minecraft:tnt", new TntAbility());
+        register("thestaff:minecraft", new MinecraftBlockAbility());
     }
 
     private static void register(String blockId, BlockAbility ability) {

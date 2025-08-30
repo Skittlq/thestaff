@@ -1,5 +1,6 @@
 package com.skittlq.thestaff.util;
 
+import com.skittlq.thestaff.items.ModItems;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
@@ -15,7 +16,9 @@ public class ModConstants {
             Items.COAL_BLOCK,
             Items.OBSIDIAN,
             Items.CAKE,
-            Items.TNT
+            Items.TNT,
+            ModItems.MINECRAFT_GAME_ICON.asItem(),
+            Items.GRASS_BLOCK
     );
 
 }

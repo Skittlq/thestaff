@@ -1,6 +1,7 @@
 package com.skittlq.thestaff.items;
 
 import com.skittlq.thestaff.TheStaff;
+import com.skittlq.thestaff.items.custom.MinecraftGameIconItem;
 import com.skittlq.thestaff.items.custom.StaffItem;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -16,6 +17,9 @@ public class ModItems {
 
     public static final DeferredItem<Item> PURPLE_STAFF = ITEMS.registerItem("purple_staff",
             (properties) -> new StaffItem(properties.fireResistant().rarity(Rarity.EPIC).stacksTo(1)));
+
+    public static final DeferredItem<BlockItem> MINECRAFT_GAME_ICON = ITEMS.registerItem("minecraft",
+            (properties) -> new MinecraftGameIconItem(properties.fireResistant().rarity(Rarity.EPIC).stacksTo(1)));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

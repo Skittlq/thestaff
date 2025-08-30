@@ -2,6 +2,7 @@ package com.skittlq.thestaff.abilities.blocks;
 
 import com.skittlq.thestaff.abilities.BlockAbility;
 import com.skittlq.thestaff.util.AbilityTrigger;
+import com.skittlq.thestaff.util.ScheduleBatchDestruction;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -17,6 +18,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
+import static com.skittlq.thestaff.util.SlowMotionHelper.smoothTickRateReset;
 import static com.skittlq.thestaff.util.TickCommand.setTickingRate;
 
 public class NetheriteBlockAbility implements BlockAbility {
@@ -65,7 +67,7 @@ public class NetheriteBlockAbility implements BlockAbility {
             }
         }
 
-        scheduleBatchDestruction((ServerLevel) level, targets);
+        ScheduleBatchDestruction.schedule((ServerLevel) level, targets, BLOCKS_PER_TICK, player);
     }
 
     @Override
@@ -76,61 +78,6 @@ public class NetheriteBlockAbility implements BlockAbility {
     @Override
     public float miningSpeed(ItemStack stack, BlockState state) {
         return 1000F;
-    }
-
-    private void scheduleBatchDestruction(ServerLevel level, Queue<BlockPos> targets) {
-        var server = level.getServer();
-
-        new Timer(true).scheduleAtFixedRate(new TimerTask() {
-            @Override public void run() {
-                // Bounce the actual work onto the server thread:
-                server.execute(() -> {
-                    int processed = 0;
-                    while (!targets.isEmpty() && processed++ < BLOCKS_PER_TICK) {
-                        BlockPos pos = targets.poll();
-                        if (pos != null && level.isLoaded(pos)) { // sanity
-                            level.destroyBlock(pos, false);
-                        }
-                    }
-                    if (targets.isEmpty()) {
-                        cancel(); // stop the TimerTask
-                    }
-                });
-            }
-        }, 0L, 50L); // ~every 2.5 ticks at 20 TPS; adjust if you like
-    }
-
-    private static float interpolateTickRate(float fraction) {
-        fraction = Math.max(0.0f, Math.min(1.0f, fraction));
-        double base = 5.0;
-        return (float) (1.0 + (20.0 - 1.0) * (Math.pow(base, fraction) - 1) / (base - 1));
-    }
-
-    public static void smoothTickRateReset(CommandSourceStack source, int holdMillis, int rampMillis, ServerLevel level) {
-        final int rampSteps = 40;
-        final Timer timer = new Timer("TickRateInterpolator", false);
-        final long totalMillis = holdMillis + rampMillis;
-        final long startTime = System.currentTimeMillis();
-
-        timer.scheduleAtFixedRate(new TimerTask() {
-            int currentStep = 0;
-            @Override
-            public void run() {
-                long elapsed = System.currentTimeMillis() - startTime;
-                if (elapsed < holdMillis) {
-                    setTickingRate(source, 1);
-
-                } else {
-                    float fraction = Math.min(1.0f, (float) (elapsed - holdMillis) / rampMillis);
-                    float tickRate = interpolateTickRate(fraction);
-                    setTickingRate(source, tickRate);
-                }
-                currentStep++;
-                if (elapsed >= totalMillis) {
-                    timer.cancel();
-                }
-            }
-        }, 0, totalMillis / (rampSteps + (holdMillis * rampSteps / rampMillis)));
     }
 
     @Override

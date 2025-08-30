@@ -22,8 +22,6 @@ public class DataGenerators {
         ResourceManager resourceManager = event.getResourceManager(PackType.CLIENT_RESOURCES);
 
         generator.addProvider(true, new AllowedItemTagProvider(packOutput, lookupProvider));
-//        generator.addProvider(true, new StaffModelProvider(packOutput, lookupProvider, resourceManager));
-
     }
 
     @SubscribeEvent
@@ -34,8 +32,6 @@ public class DataGenerators {
         ResourceManager resourceManager = event.getResourceManager(PackType.CLIENT_RESOURCES);
 
         generator.addProvider(true, new AllowedItemTagProvider(packOutput, lookupProvider));
-//        generator.addProvider(true, new StaffModelProvider(packOutput, lookupProvider, resourceManager));
-
     }
 
 }
