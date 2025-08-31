@@ -1,25 +1,29 @@
+![The Staff Logo Large](https://github.com/Skittlq/thestaff/blob/item-rendering-runtime/assets/brand/the%20staff%20logo.png?raw=true)
+---
+The Staff is a mod that adds an extremely powerful and very modular tool to Minecraft; King Orange's Staff.
+Based on the popular series [Animation vs Minecraft](https://youtube.com/playlist?list=PL7z8SQeih5AdUZvp2JUdYW7WKfF9xa7Rh&si=ZhXCR8zkfpgDF98-) by [Alan Becker](https://www.youtube.com/@alanbecker).
 
-Installation information
-=======
+**This mod is currently in alpha, so expect many bugs and unfinished work!**
+## Obtaining The Staff
+As of now, the only way to obtain the staff is through commands (`/give @s thestaff:purple_staff`) or the creative mode inventory. There will be a way to obtain it in survival in the future.
+## Using The Staff
+- King Orange's Staff can have a single implemented block inserted into it. 
+- To insert a block into the staff, you put the staff in your off-hand, and then hold your target block in your main hand, you then sneak and press right click to insert it into the staff, then you can move it back into your main hand and begin using it. 
+- To find what the block's abilities are, you can open your inventory and hover your cursor over the staff to see the list of abilities.
+## Implemented Blocks
+The Staff accepts the following blocks:
+- TNT
+- Cake
+- Copper Block
+- Gold Block
+- Iron Block
+- Diamond Block
+- Netherite Block
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
-
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
-
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
-
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
-
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+More blocks will be added in the future, I plan to add every block's abilities, including some that weren't shown in Alan Becker's animations.
+[List of known staff block abilities.](https://alanbecker.wiki/wiki/Staffs#Powers__Abilities "https://alanbecker.wiki/wiki/Staffs#Powers__Abilities")  
+[List of all minecraft blocks.](https://minecraft.wiki/w/Block#List_of_blocks "https://minecraft.wiki/w/Block#List_of_blocks")
+## Credits
+Textures and Models based on [Animation vs Minecraft Season 3](https://www.youtube.com/watch?v=VWHTlq5Fcr8) by [Alan Becker](https://www.youtube.com/@alanbecker)
+## Issues & Bug Reports
+Should you encounter any bugs, issues, or require assistance, please submit a report via the [GitHub Issues page](https://github.com/Skittlq/thestaff/issues). Feedback and suggestions are always appreciated.
