@@ -1,4 +1,4 @@
-![Endernium Logo Large](https://github.com/Skittlq/thestaff/blob/item-rendering-runtime/brand/the%20staff%20logo.png?raw=true)
+![The Staff Logo Large](https://github.com/Skittlq/thestaff/blob/item-rendering-runtime/assets/brand/the%20staff%20logo.png?raw=true)
 ---
 The Staff is a mod that adds an extremely powerful and very modular tool to Minecraft; King Orange's Staff.
 Based on the popular series [Animation vs Minecraft](https://youtube.com/playlist?list=PL7z8SQeih5AdUZvp2JUdYW7WKfF9xa7Rh&si=ZhXCR8zkfpgDF98-) by [Alan Becker](https://www.youtube.com/@alanbecker).
