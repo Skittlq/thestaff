@@ -2,11 +2,16 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.skittlq.thestaff.mixins",
+  "compatibilityLevel": "JAVA_21",
   "mixins": [
     "FurnaceAccessor",
     "MinecartFurnaceAccessor",
     "TntExplosionRadiusAccessor"
   ],
-  "client": [],
-  "server": []
+  "client": [
+    "HumanoidModelMixin",
+    "HumanoidFirstPersonMixin"
+  ],
+  "server": [],
+  "injectors": { "defaultRequire": 1 }
 }

@@ -1,6 +1,7 @@
 package com.skittlq.thestaff.datagen;
 
 import com.google.gson.*;
+import com.skittlq.thestaff.TheStaff;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.CachedOutput;
@@ -36,7 +37,7 @@ public class StaffModelProvider implements DataProvider {
         return lookupProvider.thenCompose(provider -> {
             Set<Item> allowedItems = new HashSet<>(ALLOWED_ITEMS);
 
-            ResourceLocation emptyStaffModelLoc = ResourceLocation.fromNamespaceAndPath("thestaff", "models/item/purple_staff.json");
+            ResourceLocation emptyStaffModelLoc = ResourceLocation.fromNamespaceAndPath(TheStaff.MODID, "models/item/purple_staff.json");
             JsonObject staffTemplate = loadModel(emptyStaffModelLoc);
 
             if (staffTemplate == null) {

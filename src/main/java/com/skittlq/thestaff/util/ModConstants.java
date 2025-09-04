@@ -17,7 +17,9 @@ public class ModConstants {
             Items.OBSIDIAN,
             Items.CAKE,
             Items.TNT,
-            ModItems.MINECRAFT_GAME_ICON.asItem(),
+            ModItems.LIGHT_MINECRAFT.asItem(),
+            ModItems.OMNIBLOCK.asItem(),
+            ModItems.DARK_MINECRAFT.asItem(),
             Items.GRASS_BLOCK
     );
 

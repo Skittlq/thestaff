@@ -6,7 +6,7 @@
         "model": "thestaff:item/purple_staff" },
       { "type": "minecraft:special",
         "base": "minecraft:item/generated",
-        "model": { "type": "thestaff:staff_block_slot" } }
+        "model": { "type": "thestaff:staff_renderer" } }
     ]
   }
 }

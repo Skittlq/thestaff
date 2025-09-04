@@ -1,0 +1,14 @@
+{
+  "model": {
+    "type": "minecraft:composite",
+    "models": [
+      {
+        "type": "minecraft:model",
+        "model": "thestaff:block/omniblock"
+      },
+      { "type": "minecraft:special",
+        "base": "minecraft:item/generated",
+        "model": { "type": "thestaff:omniblock_renderer" } }
+    ]
+  }
+}

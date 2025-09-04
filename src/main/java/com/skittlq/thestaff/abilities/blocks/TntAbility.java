@@ -34,7 +34,7 @@ public class TntAbility implements BlockAbility {
         PrimedTnt tnt = new PrimedTnt(EntityType.TNT, server);
         ((TntExplosionRadiusAccessor) tnt).setExplosionPower(8);
         tnt.setFuse(40);
-        tnt.setPos(spawn.x, spawn.y + 1, spawn.z);
+        tnt.setPos(spawn.x, spawn.y, spawn.z);
         tnt.setDeltaMovement(look.scale(1).add(0, 0, 0));
 
         server.playSound(tnt, tnt.getX(), tnt.getY(), tnt.getZ(), SoundEvents.TNT_PRIMED, SoundSource.BLOCKS, 1.0F, 1.0F);

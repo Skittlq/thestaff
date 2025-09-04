@@ -1,9 +1,13 @@
 package com.skittlq.thestaff.items.custom;
 
+import com.skittlq.thestaff.TheStaff;
 import com.skittlq.thestaff.abilities.BlockAbility;
 import com.skittlq.thestaff.abilities.StaffAbilities;
+import com.skittlq.thestaff.anim.BuiltinAnims;
+import com.skittlq.thestaff.anim.ClientPlayerAnimRuntime;
+import com.skittlq.thestaff.network.NetSend;
+import com.skittlq.thestaff.network.payloads.PlayPoseAnimPayload;
 import com.skittlq.thestaff.util.AbilityTrigger;
-import com.skittlq.thestaff.util.AnimSender;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -35,7 +39,7 @@ import java.util.stream.Collectors;
 
 public class StaffItem extends Item {
     private static final String BLOCK_ID_KEY = "StaffStoredBlockId";
-    private static final TagKey<Item> ALLOWED_BLOCKS_TAG = ItemTags.create(ResourceLocation.fromNamespaceAndPath("thestaff", "allowed_blocks"));
+    private static final TagKey<Item> ALLOWED_BLOCKS_TAG = ItemTags.create(ResourceLocation.fromNamespaceAndPath(TheStaff.MODID, "allowed_blocks"));
 
     public StaffItem(Properties properties) {
         super(properties);
@@ -84,9 +88,20 @@ public class StaffItem extends Item {
 
     @Override
     public boolean overrideOtherStackedOnMe(ItemStack stack, ItemStack other, Slot slot, ClickAction action, Player player, SlotAccess access) {
+        ItemStack stored = getStoredBlock(stack);
+
+//        if (action == ClickAction.PRIMARY) {
+//            if (stored.getItem() == ModItems.LIGHT_MINECRAFT.asItem()) {
+//                if () {
+//
+//                }
+//                player.displayClientMessage(Component.literal(stack + stored.toString()), false);
+//
+//                return true;
+//            }
+//        }
         if (action == ClickAction.SECONDARY) {
                 if (other.isEmpty() && hasStoredBlock(stack)) {
-                    ItemStack stored = getStoredBlock(stack);
                     if (!stored.isEmpty() && stored.getItem() != Items.AIR) {
                         access.set(stored);
                         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(new CompoundTag()));
@@ -96,7 +111,6 @@ public class StaffItem extends Item {
 
             if (other.getItem().builtInRegistryHolder().is(ALLOWED_BLOCKS_TAG)) {
                 if (hasStoredBlock(stack)) {
-                    ItemStack stored = getStoredBlock(stack);
                     if (!stored.isEmpty() && stored.getItem() != Items.AIR) {
                         access.set(stored);
                     }
@@ -129,8 +143,10 @@ public class StaffItem extends Item {
             if (player.isShiftKeyDown()) {
                 if (hand == InteractionHand.MAIN_HAND) {
                     if (player instanceof ServerPlayer sp) {
-                        AnimSender.play(sp, "staff_cast");
+                        NetSend.sendAnimToSelfAndTrackers(sp,
+                                new PlayPoseAnimPayload(player.getUUID(), BuiltinAnims.RAISE_RIGHT, true));
                     }
+
 
                     InteractionResult result = StaffAbilities.get(blockId)
                             .onShiftRightClick(level, player, hand);
@@ -138,8 +154,10 @@ public class StaffItem extends Item {
                 }
             } else {
                 if (player instanceof ServerPlayer sp) {
-                    AnimSender.play(sp, "staff_cast");
+                    NetSend.sendAnimToSelfAndTrackers(sp,
+                            new PlayPoseAnimPayload(player.getUUID(), BuiltinAnims.RAISE_RIGHT, true));
                 }
+
 
                 InteractionResult result = StaffAbilities.get(blockId)
                         .onRightClick(level, player, hand);

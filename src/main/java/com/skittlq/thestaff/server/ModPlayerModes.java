@@ -3,7 +3,6 @@ package com.skittlq.thestaff.server;
 import com.skittlq.thestaff.TheStaff;
 import com.skittlq.thestaff.items.ModItems;
 import com.skittlq.thestaff.items.custom.StaffItem;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
@@ -54,16 +53,15 @@ public final class ModPlayerModes {
     private static boolean isIconOrStaffWithIcon(ItemStack stack) {
         if (stack.isEmpty()) return false;
 
-        if (stack.is(ModItems.MINECRAFT_GAME_ICON.get())) {
+        if (stack.is(ModItems.LIGHT_MINECRAFT.get()) || stack.is(ModItems.OMNIBLOCK.get()) || stack.is(ModItems.DARK_MINECRAFT.get())) {
             return true;
         }
 
         if (stack.getItem() instanceof StaffItem) {
             ItemStack stored = StaffItem.getStoredBlock(stack);
-            return stored.is(ModItems.MINECRAFT_GAME_ICON.get());
+            return stored.is(ModItems.LIGHT_MINECRAFT.get()) || stored.is(ModItems.OMNIBLOCK.get()) || stored.is(ModItems.DARK_MINECRAFT.get());
         }
 
         return false;
     }
-
 }

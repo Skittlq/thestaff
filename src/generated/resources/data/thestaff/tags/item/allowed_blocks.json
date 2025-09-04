@@ -9,7 +9,9 @@
     "minecraft:obsidian",
     "minecraft:cake",
     "minecraft:tnt",
-    "thestaff:minecraft",
+    "thestaff:light_minecraft",
+    "thestaff:omniblock",
+    "thestaff:dark_minecraft",
     "minecraft:grass_block"
   ]
 }

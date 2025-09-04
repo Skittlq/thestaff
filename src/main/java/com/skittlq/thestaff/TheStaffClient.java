@@ -1,16 +1,19 @@
 package com.skittlq.thestaff;
 
 import com.skittlq.thestaff.abilities.StaffAbilities;
+import com.skittlq.thestaff.anim.BuiltinAnims;
+import com.skittlq.thestaff.anim.ClientPlayerAnimRuntime;
 import com.skittlq.thestaff.blocks.ModBlocks;
 import com.skittlq.thestaff.items.custom.StaffItem;
-import com.skittlq.thestaff.rendering.GameIconItemGlowRenderer;
-import com.skittlq.thestaff.rendering.StaffSpecialRenderer;
-import com.zigythebird.playeranim.animation.PlayerAnimationController;
-import com.zigythebird.playeranim.api.PlayerAnimationFactory;
-import com.zigythebird.playeranimcore.enums.PlayState;
+import com.skittlq.thestaff.rendering.DarkMinecraftRenderer;
+import com.skittlq.thestaff.rendering.LightMinecraftRenderer;
+import com.skittlq.thestaff.rendering.OmniBlockRenderer;
+import com.skittlq.thestaff.rendering.StaffRenderer;
+import com.skittlq.thestaff.util.StoredBlockModelProperty;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -22,8 +25,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
-import net.neoforged.neoforge.client.event.RegisterItemModelsEvent;
+import net.neoforged.neoforge.client.event.RegisterSelectItemModelPropertyEvent;
 import net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent;
+import net.neoforged.neoforge.client.event.RenderHandEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -32,24 +36,34 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 @EventBusSubscriber(modid = TheStaff.MODID, value = Dist.CLIENT)
 public class TheStaffClient {
     public static final ResourceLocation STAFF_LAYER_ID =
-            ResourceLocation.fromNamespaceAndPath("thestaff", "staff_layer");
+            ResourceLocation.fromNamespaceAndPath(TheStaff.MODID, "staff_layer");
 
     public TheStaffClient(ModContainer container) {
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
     }
 
     @SubscribeEvent
+    public static void registerSelectProperties(RegisterSelectItemModelPropertyEvent event) {
+        event.register(
+                ResourceLocation.fromNamespaceAndPath(TheStaff.MODID, "stored_block_id"),
+                StoredBlockModelProperty.TYPE
+        );
+    }
+
+    @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent e) {
-        PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(
-                STAFF_LAYER_ID,
-                1600,
-                player -> new PlayerAnimationController(player,
-                        (controller, state, animSetter) -> PlayState.STOP)
+        BuiltinAnims.registerAll();
+
+        e.enqueueWork(() ->
+                ItemBlockRenderTypes.setRenderLayer(
+                        ModBlocks.LIGHT_MINECRAFT.get(),
+                        net.minecraft.client.renderer.chunk.ChunkSectionLayer.CUTOUT_MIPPED
+                )
         );
 
         e.enqueueWork(() ->
                 ItemBlockRenderTypes.setRenderLayer(
-                        ModBlocks.MINECRAFT_GAME_ICON.get(),
+                        ModBlocks.DARK_MINECRAFT.get(),
                         net.minecraft.client.renderer.chunk.ChunkSectionLayer.CUTOUT_MIPPED
                 )
         );
@@ -63,15 +77,26 @@ public class TheStaffClient {
                                 ? BiomeColors.getAverageGrassColor(level, pos)
                                 : GrassColor.get(0.5D, 1.0D))
                                 : -1,
-                ModBlocks.MINECRAFT_GAME_ICON.get());
+                ModBlocks.LIGHT_MINECRAFT.get());
+        e.register((state, level, pos, idx) ->
+                        (idx == 0 || idx == 1)
+                                ? (level != null && pos != null
+                                ? BiomeColors.getAverageGrassColor(level, pos)
+                                : GrassColor.get(0.5D, 1.0D))
+                                : -1,
+                ModBlocks.DARK_MINECRAFT.get());
     }
 
     @SubscribeEvent
     public static void registerSpecialRenderers(RegisterSpecialModelRendererEvent e) {
-        e.register(ResourceLocation.fromNamespaceAndPath("thestaff","staff_block_slot"),
-                StaffSpecialRenderer.Unbaked.MAP_CODEC);
-        e.register(ResourceLocation.fromNamespaceAndPath("thestaff","game_icon_item_glow"),
-                GameIconItemGlowRenderer.Unbaked.MAP_CODEC);
+        e.register(ResourceLocation.fromNamespaceAndPath(TheStaff.MODID,"staff_renderer"),
+                StaffRenderer.Unbaked.MAP_CODEC);
+        e.register(ResourceLocation.fromNamespaceAndPath(TheStaff.MODID,"light_minecraft_renderer"),
+                LightMinecraftRenderer.Unbaked.MAP_CODEC);
+        e.register(ResourceLocation.fromNamespaceAndPath(TheStaff.MODID,"omniblock_renderer"),
+                OmniBlockRenderer.Unbaked.MAP_CODEC);
+        e.register(ResourceLocation.fromNamespaceAndPath(TheStaff.MODID,"dark_minecraft_renderer"),
+                DarkMinecraftRenderer.Unbaked.MAP_CODEC);
 
     }
 

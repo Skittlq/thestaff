@@ -1,6 +1,8 @@
 {
   "item.thestaff.purple_staff": "King Orange's Staff",
-  "item.thestaff.minecraft": "Minecraft",
+  "item.thestaff.light_minecraft": "Light Minecraft",
+  "item.thestaff.dark_minecraft": "Dark Minecraft",
+  "item.thestaff.omniblock": "Omniblock",
 
   "creativetab.thestaff": "The Staff",
 

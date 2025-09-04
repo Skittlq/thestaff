@@ -1,0 +1,24 @@
+{
+  "variants": {
+    "snowy=false": [
+      {
+        "model": "thestaff:block/minecraft"
+      },
+      {
+        "model": "thestaff:block/minecraft",
+        "y": 90
+      },
+      {
+        "model": "thestaff:block/minecraft",
+        "y": 180
+      },
+      {
+        "model": "thestaff:block/minecraft",
+        "y": 270
+      }
+    ],
+    "snowy=true": {
+      "model": "minecraft:block/grass_block_snow"
+    }
+  }
+}

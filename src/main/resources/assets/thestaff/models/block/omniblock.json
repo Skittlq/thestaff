@@ -1,0 +1,22 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "top": "thestaff:block/omniblock_top",
+    "bottom": "thestaff:block/omniblock_bottom",
+    "side": "thestaff:block/omniblock_side",
+    "particle": "minecraft:block/dirt"
+  },
+  "elements": [
+    {
+      "from": [0,0,0], "to": [16,16,16],
+      "faces": {
+        "up":   { "texture": "#top" },
+        "down": { "texture": "#bottom" },
+        "north": { "texture": "#side" },
+        "south": { "texture": "#side" },
+        "west":  { "texture": "#side" },
+        "east":  { "texture": "#side" }
+      }
+    }
+  ]
+}

@@ -1,45 +1,32 @@
 package com.skittlq.thestaff.network;
 
-import com.skittlq.thestaff.network.payloads.PlayAnimPayload;
-import com.skittlq.thestaff.TheStaffClient;
-import com.zigythebird.playeranim.animation.PlayerAnimationController;
-import com.zigythebird.playeranim.api.PlayerAnimationAccess;
+import com.skittlq.thestaff.TheStaff;
+import com.skittlq.thestaff.anim.ClientPlayerAnimRuntime;
+import com.skittlq.thestaff.network.payloads.PlayPoseAnimPayload;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
-@EventBusSubscriber(modid = "thestaff")
+@EventBusSubscriber(modid = TheStaff.MODID)
 public final class ModNetworking {
     private ModNetworking() {}
 
     @SubscribeEvent
-    public static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+    public static void registerPayloads(RegisterPayloadHandlersEvent e) {
+        var reg = e.registrar(TheStaff.MODID);
+        reg.playToClient(PlayPoseAnimPayload.TYPE, PlayPoseAnimPayload.STREAM_CODEC, (payload, ctx) -> {
+            ctx.enqueueWork(() -> {
+                var mc = Minecraft.getInstance();
+                if (mc.level == null) return;
+                var p = mc.level.getPlayerByUUID(payload.playerId());
+                if (p == null) return;
+                TheStaff.LOGGER.info("[ANIM] RECEIVED ← uuid={} name={} anim={} play={}",
+                                             payload.playerId(), p.getGameProfile().getName(), payload.animId(), payload.play());
 
-        registrar.playToClient(
-                PlayAnimPayload.TYPE,
-                PlayAnimPayload.STREAM_CODEC,
-                (payload, ctx) -> ctx.enqueueWork(() -> {
-                    Minecraft mc = Minecraft.getInstance();
-                    if (mc.level == null) return;
-
-                    AbstractClientPlayer target =
-                            payload.playerId().equals(mc.player != null ? mc.player.getUUID() : null)
-                                    ? mc.player
-                                    : (mc.level.getPlayerByUUID(payload.playerId()) instanceof AbstractClientPlayer cp ? cp : null);
-
-                    if (target == null) return;
-
-                    var layer = com.zigythebird.playeranim.api.PlayerAnimationAccess
-                            .getPlayerAnimationLayer(target, TheStaffClient.STAFF_LAYER_ID);
-
-                    if (layer instanceof com.zigythebird.playeranim.animation.PlayerAnimationController controller) {
-                        controller.triggerAnimation(payload.animId());
-                    }
-                })
-        );
+                if (payload.play()) ClientPlayerAnimRuntime.play(p, payload.animId());
+                else ClientPlayerAnimRuntime.stop(p);
+            });
+        });
     }
 }
