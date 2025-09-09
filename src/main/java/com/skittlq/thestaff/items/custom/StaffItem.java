@@ -9,6 +9,7 @@ import com.skittlq.thestaff.network.NetSend;
 import com.skittlq.thestaff.network.payloads.PlayPoseAnimPayload;
 import com.skittlq.thestaff.util.AbilityTrigger;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,6 +45,10 @@ public class StaffItem extends Item {
     public StaffItem(Properties properties) {
         super(properties);
     }
+
+    @Override public int getUseDuration(ItemStack stack, net.minecraft.world.entity.LivingEntity entity) { return 72000; }
+    @Override public ItemUseAnimation getUseAnimation(ItemStack stack) { return ItemUseAnimation.NONE; }
+
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
@@ -132,7 +137,6 @@ public class StaffItem extends Item {
 
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
-        if (level.isClientSide) return InteractionResult.PASS;
 
         ItemStack staff = player.getItemInHand(hand);
         if (staff.getItem() != this) return InteractionResult.PASS;
@@ -251,7 +255,6 @@ public class StaffItem extends Item {
 
     @Override
     public InteractionResult useOn(UseOnContext context) {
-        if (!context.getLevel().isClientSide) {
             var id = getStoredBlockId(context.getItemInHand());
             if (id != null) {
                 Player player = context.getPlayer();
@@ -269,18 +272,40 @@ public class StaffItem extends Item {
                     if (result != InteractionResult.PASS) return result;
                 }
             }
-        }
         return super.useOn(context);
     }
 
     @Override
     public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, @org.jetbrains.annotations.Nullable EquipmentSlot slot) {
+        super.inventoryTick(stack, level, entity, slot);
         var id = getStoredBlockId(stack);
         if (id != null && entity instanceof Player player) {
             StaffAbilities.get(id).onTick(level, player, player.blockPosition(), stack);
         }
+        // Example of splitting client vs server
+        if (level.isClientSide) {
+            // Client-side physics, rendering flags, etc.
+            ((Player) entity).displayClientMessage(Component.literal("Hooked!"), false);
 
-        super.inventoryTick(stack, level, entity, slot);
-    }
+        } else {
+            // Server-side durability, cooldown, syncing, etc.
+        }
+
+
+        if (!(entity instanceof Player p) || id == null) return;
+
+        boolean isOmni  = id.equals(BuiltInRegistries.ITEM.getKey(com.skittlq.thestaff.blocks.ModBlocks.OMNIBLOCK.get().asItem()));
+        boolean isDark  = id.equals(BuiltInRegistries.ITEM.getKey(com.skittlq.thestaff.blocks.ModBlocks.DARK_MINECRAFT.get().asItem()));
+        boolean isLight = id.equals(BuiltInRegistries.ITEM.getKey(com.skittlq.thestaff.blocks.ModBlocks.LIGHT_MINECRAFT.get().asItem()));
+
+        boolean held = p.getMainHandItem() == stack || p.getOffhandItem() == stack;
+        boolean shouldGlow = held && (isOmni || ((isDark || isLight) && (p.isFallFlying() || p.getAbilities().flying)));
+
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        CompoundTag root = (data != null) ? data.copyTag() : new CompoundTag();
+        CompoundTag renderTag = root.getCompound(TheStaff.MODID + ":render").orElse(new CompoundTag());
+        renderTag.putBoolean("active", shouldGlow);
+        root.put(TheStaff.MODID + ":render", renderTag);
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));    }
 
 }

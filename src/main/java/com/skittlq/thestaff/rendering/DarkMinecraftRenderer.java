@@ -11,15 +11,20 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class DarkMinecraftRenderer implements SpecialModelRenderer<Boolean> {
 
@@ -30,10 +35,22 @@ public final class DarkMinecraftRenderer implements SpecialModelRenderer<Boolean
     private static final float GLOW_ALPHA    = 1.0f;
     private static final float GLOW_Z_NUDGE  = 0.002f;
 
-    private static float fadeProgress = 0f;
     private static final float FADE_SPEED = 8f;
 
-    @Override public @Nullable Boolean extractArgument(ItemStack stack) { return Boolean.TRUE; }
+    // Per-item fades keyed by <uid>|<hand-context>
+    private static final ConcurrentHashMap<String, Float> FADE = new ConcurrentHashMap<>();
+    private static final String RENDER_TAG = TheStaff.MODID + ":render";
+    private static final String UID_TAG    = "uid";
+    private static final String ACTIVE_TAG = "active"; // written server-side on the held stack
+
+    // Capture the exact stack being rendered (could be another player's)
+    private static final ThreadLocal<ItemStack> TL_STACK = new ThreadLocal<>();
+
+    @Override
+    public @Nullable Boolean extractArgument(ItemStack stack) {
+        TL_STACK.set(stack);
+        return Boolean.TRUE;
+    }
 
     @Override
     public void render(@Nullable Boolean arg, ItemDisplayContext ctx, PoseStack pose,
@@ -45,10 +62,22 @@ public final class DarkMinecraftRenderer implements SpecialModelRenderer<Boolean
                         ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND  ||
                         ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
 
-        if (!isHand) return;
+        if (!isHand) { TL_STACK.remove(); return; }
 
-        boolean active = isPlayerFlying();
-        updateFade(active);
+        // The specific stack for this draw call
+        final ItemStack stack = TL_STACK.get();
+        TL_STACK.remove();
+
+        // Per-stack fade key (no dependency on local hands)
+        final String fadeKey = makeFadeKeyFromStack(stack, ctx);
+
+        // Active: first-person uses local flight; third-person uses per-stack flag
+        final boolean active = switch (ctx) {
+            case FIRST_PERSON_LEFT_HAND, FIRST_PERSON_RIGHT_HAND -> isLocalPlayerFlying();
+            default -> isStackActive(stack);
+        };
+
+        final float fadeProgress = updateFade(fadeKey, active);
         if (fadeProgress <= 0f) return;
 
         pose.pushPose();
@@ -86,18 +115,44 @@ public final class DarkMinecraftRenderer implements SpecialModelRenderer<Boolean
 
     @Override public void getExtents(Set<Vector3f> out) {}
 
-    private static boolean isPlayerFlying() {
+    // ----- helpers -----
+
+    private static boolean isLocalPlayerFlying() {
         var mc = Minecraft.getInstance();
         var p = mc.player;
         return p != null && (p.isFallFlying() || p.getAbilities().flying);
     }
 
-    private static void updateFade(boolean active) {
+    private static boolean isStackActive(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) return false;
+        CompoundTag root = data.copyTag();
+        CompoundTag renderTag = root.getCompound(RENDER_TAG).orElse(new CompoundTag());
+        return renderTag.getBoolean(ACTIVE_TAG).orElse(false);
+    }
+
+    private static float updateFade(String key, boolean active) {
         float dt = Minecraft.getInstance().getFrameTimeNs() / 1_000_000_000f;
         float step = FADE_SPEED * dt;
-        fadeProgress = active ? Math.min(1f, fadeProgress + step)
-                : Math.max(0f, fadeProgress - step);
+        float cur = FADE.getOrDefault(key, 0f);
+        cur = active ? Math.min(1f, cur + step) : Math.max(0f, cur - step);
+        FADE.put(key, cur);
+        return cur;
+    }
 
+    private static String makeFadeKeyFromStack(ItemStack stack, ItemDisplayContext ctx) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        CompoundTag root = (data != null) ? data.copyTag() : new CompoundTag();
+
+        CompoundTag renderTag = root.getCompound(RENDER_TAG).orElse(new CompoundTag());
+        String uid = renderTag.getString(UID_TAG).orElse("");
+        if (uid.isEmpty()) {
+            uid = UUID.randomUUID().toString();
+            renderTag.putString(UID_TAG, uid);
+            root.put(RENDER_TAG, renderTag);
+            stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
+        }
+        return uid + "|" + ctx.name();
     }
 
     private static void faceCameraHere(PoseStack pose) {
@@ -123,7 +178,7 @@ public final class DarkMinecraftRenderer implements SpecialModelRenderer<Boolean
         var last = pose.last();
         Matrix4f mat = last.pose();
 
-        int light   = LightTexture.FULL_BLOCK;
+        int light   = LightTexture.FULL_BRIGHT; // consistent with other emitters
         int overlay = OverlayTexture.NO_OVERLAY;
 
         float u0 = 0.01f, v0 = 0.01f, u1 = 0.99f, v1 = 0.99f;

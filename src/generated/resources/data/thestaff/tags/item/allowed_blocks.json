@@ -12,6 +12,11 @@
     "thestaff:light_minecraft",
     "thestaff:omniblock",
     "thestaff:dark_minecraft",
-    "minecraft:grass_block"
+    "minecraft:redstone_block",
+    "minecraft:cobweb",
+    "thestaff:chrome",
+    "thestaff:animate",
+    "thestaff:explorer",
+    "thestaff:windows"
   ]
 }

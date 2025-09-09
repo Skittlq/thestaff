@@ -1,0 +1,13 @@
+{
+  "loader": "neoforge:obj",
+  "model": "thestaff:models/block/wallpaper.obj",
+  "mtl_override": "thestaff:models/block/wallpaper.mtl",
+  "textures": {
+    "texture0": "thestaff:block/wallpaper",
+    "particle":  "thestaff:block/wallpaper"
+  },
+  "automatic_culling": false,
+  "shade_quads": false,
+  "flip_v": true,
+  "emissive_ambient": true
+}

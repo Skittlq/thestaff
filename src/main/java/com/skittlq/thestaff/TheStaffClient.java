@@ -4,11 +4,9 @@ import com.skittlq.thestaff.abilities.StaffAbilities;
 import com.skittlq.thestaff.anim.BuiltinAnims;
 import com.skittlq.thestaff.anim.ClientPlayerAnimRuntime;
 import com.skittlq.thestaff.blocks.ModBlocks;
+import com.skittlq.thestaff.entities.ModEntities;
 import com.skittlq.thestaff.items.custom.StaffItem;
-import com.skittlq.thestaff.rendering.DarkMinecraftRenderer;
-import com.skittlq.thestaff.rendering.LightMinecraftRenderer;
-import com.skittlq.thestaff.rendering.OmniBlockRenderer;
-import com.skittlq.thestaff.rendering.StaffRenderer;
+import com.skittlq.thestaff.rendering.*;
 import com.skittlq.thestaff.util.StoredBlockModelProperty;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -24,10 +22,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
-import net.neoforged.neoforge.client.event.RegisterSelectItemModelPropertyEvent;
-import net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent;
-import net.neoforged.neoforge.client.event.RenderHandEvent;
+import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -100,22 +95,22 @@ public class TheStaffClient {
 
     }
 
-    @SubscribeEvent
-    public static void onBlockBreak(BlockEvent.BreakEvent event) {
-        Player player = event.getPlayer();
-        if (player == null) return;
-
-        ItemStack stack = player.getMainHandItem();
-        if (!(stack.getItem() instanceof StaffItem staff)) return;
-
-        var id = StaffItem.getStoredBlockId(stack);
-        if (id != null) {
-            if (player.isShiftKeyDown()) {
-                StaffAbilities.get(id).onShiftBreakBlock(player.level(), player, event.getPos(), stack);
-            } else {
-                StaffAbilities.get(id).onBreakBlock(player.level(), player, event.getPos(), stack);
-            }
-        }
-    }
+//    @SubscribeEvent
+//    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+//        Player player = event.getPlayer();
+//        if (player == null) return;
+//
+//        ItemStack stack = player.getMainHandItem();
+//        if (!(stack.getItem() instanceof StaffItem staff)) return;
+//
+//        var id = StaffItem.getStoredBlockId(stack);
+//        if (id != null) {
+//            if (player.isShiftKeyDown()) {
+//                StaffAbilities.get(id).onShiftBreakBlock(player.level(), player, event.getPos(), stack);
+//            } else {
+//                StaffAbilities.get(id).onBreakBlock(player.level(), player, event.getPos(), stack);
+//            }
+//        }
+//    }
 
 }

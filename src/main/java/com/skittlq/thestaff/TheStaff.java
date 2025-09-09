@@ -1,6 +1,9 @@
 package com.skittlq.thestaff;
 
+import com.skittlq.thestaff.abilities.StaffAbilities;
+import com.skittlq.thestaff.api.RegisterStaffAbilitiesEvent;
 import com.skittlq.thestaff.blocks.ModBlocks;
+import com.skittlq.thestaff.entities.ModEntities;
 import com.skittlq.thestaff.items.ModCreativeModeTabs;
 import com.skittlq.thestaff.items.ModItems;
 import org.slf4j.Logger;
@@ -28,6 +31,7 @@ public class TheStaff {
         ModCreativeModeTabs.register(modEventBus);
         NeoForge.EVENT_BUS.register(com.skittlq.thestaff.util.ScheduleBatchDestruction.class);
         ModBlocks.register(modEventBus);
+        ModEntities.register(modEventBus);
 
         NeoForge.EVENT_BUS.register(this);
 
@@ -35,6 +39,9 @@ public class TheStaff {
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {
+        StaffAbilities.bootstrapInternal();
+        event.enqueueWork(() -> NeoForge.EVENT_BUS.post(new RegisterStaffAbilitiesEvent()));
+
     }
 
     @SubscribeEvent

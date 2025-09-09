@@ -13,9 +13,12 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.special.SpecialModelRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.level.block.GrassBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Matrix3f;
@@ -24,6 +27,8 @@ import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.skittlq.thestaff.blocks.ModBlocks;
 
@@ -35,19 +40,23 @@ public final class StaffRenderer implements SpecialModelRenderer<ResourceLocatio
     private static final ResourceLocation SHADOW_TEX =
             ResourceLocation.fromNamespaceAndPath(TheStaff.MODID, "textures/misc/shadow.png");
 
-    private static final float GLOW_SIZE  = 0.85f;
-    private static final float GLOW_ALPHA = 1f;
+    private static final float GLOW_SIZE    = 0.85f;
+    private static final float GLOW_ALPHA   = 1f;
     private static final float GLOW_Z_NUDGE = 0.002f;
 
-    private static float fadeProgress = 0f;
-
-    private static final java.util.concurrent.ConcurrentHashMap<String, Float> FADE = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final ThreadLocal<String> TL_KEY = new ThreadLocal<>();
+    private static final ConcurrentHashMap<String, Float> FADE = new ConcurrentHashMap<>();
     private static final float FADE_SPEED = 8f;
 
+    private static final String RENDER_TAG = TheStaff.MODID + ":render";
+    private static final String UID_TAG    = "uid";
+    private static final String ACTIVE_TAG = "active"; // written server-side on the staff stack
+
+    // Capture the exact staff stack for this render pass
+    private static final ThreadLocal<ItemStack> TL_STACK = new ThreadLocal<>();
 
     @Override @Nullable
     public ResourceLocation extractArgument(ItemStack stack) {
+        TL_STACK.set(stack);
         return com.skittlq.thestaff.items.custom.StaffItem.getStoredBlockId(stack);
     }
 
@@ -91,63 +100,134 @@ public final class StaffRenderer implements SpecialModelRenderer<ResourceLocatio
     }
 
     @Override
-    public void render(@Nullable ResourceLocation id, ItemDisplayContext ctx, PoseStack pose,
-                       MultiBufferSource buf, int light, int overlay, boolean foil) {
-        if (id == null) return;
+    public void render(@Nullable ResourceLocation id,
+                       ItemDisplayContext ctx,
+                       PoseStack pose,
+                       MultiBufferSource buf,
+                       int light,
+                       int overlay,
+                       boolean foil) {
+        // If extractArgument returned null, clear any stray TL and leave quietly.
+        if (id == null) { TL_STACK.remove(); return; }
 
+        // The exact staff stack captured in extractArgument; may be null in odd paths.
+        final ItemStack staffStack = TL_STACK.get();
+        TL_STACK.remove(); // always clear immediately
+
+        // Resolve the stored item safely; only proceed if it's a BlockItem.
         var holder = BuiltInRegistries.ITEM.get(id);
         if (holder.isEmpty()) return;
         Item item = holder.get().value();
         if (!(item instanceof BlockItem bi)) return;
 
+        // Render the held block model with strict push/pop hygiene.
         BlockState state = bi.getBlock().defaultBlockState();
         if (state.hasProperty(GrassBlock.SNOWY)) {
             state = state.setValue(GrassBlock.SNOWY, Boolean.FALSE);
         }
 
         pose.pushPose();
-        applySlotTransform(ctx, pose);
-        blocks.renderSingleBlock(state, pose, buf, light, overlay);
-        pose.popPose();
+        try {
+            applySlotTransform(ctx, pose);
+            blocks.renderSingleBlock(state, pose, buf, light, overlay);
+        } finally {
+            pose.popPose();
+        }
 
+        // Only hands can show the glow/shadow.
         boolean isHandContext =
                 ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND  ||
                         ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND ||
                         ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND  ||
                         ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
 
-        boolean active = isHandContext && (
-                (isPlayerFlying() && (item == ModBlocks.LIGHT_MINECRAFT.get().asItem() || item == ModBlocks.DARK_MINECRAFT.get().asItem()))
-                        || (item == ModBlocks.OMNIBLOCK.get().asItem())
-        );
+        if (!isHandContext) return;
 
-        updateFade(active);
+        // If the staff stack couldn't be captured, skip all glow logic safely.
+        if (staffStack == null || staffStack.isEmpty()) return;
 
-        if (fadeProgress > 0f) {
-            pose.pushPose();
+        // Identify which special block we’re holding.
+        boolean isOmni  = (item == ModBlocks.OMNIBLOCK.get().asItem());
+        boolean isDark  = (item == ModBlocks.DARK_MINECRAFT.get().asItem());
+        boolean isLight = (item == ModBlocks.LIGHT_MINECRAFT.get().asItem());
 
-            if (ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND
-                    || ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
+        // Per-stack fade key (your existing helper).
+        String fadeKey = makeFadeKeyFromStack(staffStack, ctx);
+
+        // Active rule: FP uses local flight for Light/Dark; Omni always; TP reads per-stack flag.
+        boolean active = switch (ctx) {
+            case FIRST_PERSON_LEFT_HAND, FIRST_PERSON_RIGHT_HAND ->
+                    isOmni || (isLocalPlayerFlying() && (isLight || isDark));
+            default -> isStackActive(staffStack);
+        };
+
+        float fade = updateFade(fadeKey, active);
+        if (fade <= 0f) return;
+
+        pose.pushPose();
+        try {
+            // Position the billboard near the hand.
+            if (ctx == ItemDisplayContext.THIRD_PERSON_LEFT_HAND || ctx == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
                 pose.translate(8.5/16f, 28/16f, 8/16f);
             } else if (ctx == ItemDisplayContext.FIRST_PERSON_LEFT_HAND) {
                 pose.translate(16/16f, 20/16f, -4/16f);
-            } else if (ctx == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND) {
+            } else { // FIRST_PERSON_RIGHT_HAND
                 pose.translate(0/16f, 20/16f, -6/16f);
             }
-            faceCameraReplacingRotation(pose);
 
+            faceCameraReplacingRotation(pose);
             pose.translate(0.0, 0.0, GLOW_Z_NUDGE);
 
-            float eased = 0.5f - 0.5f * (float)Math.cos(Math.PI * fadeProgress);
+            float eased = 0.5f - 0.5f * (float)Math.cos(Math.PI * fade);
             float size  = GLOW_SIZE  * eased;
             float alpha = GLOW_ALPHA * eased;
 
-            pose.scale(size, size, size);
-            renderBillboardGlow(pose, buf, 1f, alpha);
+            renderBillboardSprite(pose, buf, GLOW_TEX, size, alpha);
+            // If you also draw a shadow, call renderBillboardSprite(...) with SHADOW_TEX as needed.
+        } finally {
             pose.popPose();
         }
+    }
 
+    /** Build/read a persistent uid on the *staff* stack and return "<uid>|<ctx>" */
+    private static String makeFadeKeyFromStack(ItemStack stack, ItemDisplayContext ctx) {
+        if (stack == null || stack.isEmpty()) return "no-stack|" + ctx.name();
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        CompoundTag root = (data != null) ? data.copyTag() : new CompoundTag();
 
+        CompoundTag renderTag = root.getCompound(RENDER_TAG).orElse(new CompoundTag());
+        String uid = renderTag.getString(UID_TAG).orElse("");
+        if (uid.isEmpty()) {
+            uid = UUID.randomUUID().toString();
+            renderTag.putString(UID_TAG, uid);
+            root.put(RENDER_TAG, renderTag);
+            stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
+        }
+        return uid + "|" + ctx.name();
+    }
+
+    private static boolean isStackActive(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) return false;
+        CompoundTag root = data.copyTag();
+        CompoundTag renderTag = root.getCompound(RENDER_TAG).orElse(new CompoundTag());
+        return renderTag.getBoolean(ACTIVE_TAG).orElse(false);
+    }
+
+    private static boolean isLocalPlayerFlying() {
+        var mc = Minecraft.getInstance();
+        var pl = mc.player;
+        return pl != null && (pl.isFallFlying() || pl.getAbilities().flying);
+    }
+
+    private static float updateFade(String key, boolean active) {
+        long ns = Minecraft.getInstance().getFrameTimeNs();
+        float dt = ns / 1_000_000_000f;
+        float cur = FADE.getOrDefault(key, 0f);
+        float step = FADE_SPEED * dt;
+        cur = active ? Math.min(1f, cur + step) : Math.max(0f, cur - step);
+        FADE.put(key, cur);
+        return cur;
     }
 
     private static void faceCameraReplacingRotation(PoseStack pose) {
@@ -161,40 +241,24 @@ public final class StaffRenderer implements SpecialModelRenderer<ResourceLocatio
         Vector3f t = new Vector3f();
         poseMat.getTranslation(t);
 
-        poseMat.identity()
-                .translate(t)
-                .rotate(camQ);
-
-        normalMat.identity()
-                .rotate(camQ);
+        poseMat.identity().translate(t).rotate(camQ);
+        normalMat.identity().rotate(camQ);
     }
-
 
     @Override
     public void getExtents(Set<Vector3f> out) {
         out.add(new Vector3f(6f/16f, 18f/16f, 6f/16f));
-        out.add(new Vector3f(10f/16f, 22f/16f, 10f/16f));
+        out.add(new Vector3f(10f/16f, 22f/16f, 10/16f));
     }
 
-    private static void updateFade(boolean active) {
-        long ns = Minecraft.getInstance().getFrameTimeNs();
-        float deltaSeconds = ns / 1_000_000_000f;
-
-        float step = FADE_SPEED * deltaSeconds;
-        if (active) fadeProgress = Math.min(1f, fadeProgress + step);
-        else        fadeProgress = Math.max(0f, fadeProgress - step);
-    }
-
-    private static boolean isPlayerFlying() {
-        var mc = Minecraft.getInstance();
-        var pl = mc.player;
-        return pl != null && (pl.isFallFlying() || pl.getAbilities().flying);
-    }
-
-    private static void renderBillboardGlow(PoseStack pose, MultiBufferSource buf, float size, float alpha) {
+    private static void renderBillboardSprite(PoseStack pose,
+                                              MultiBufferSource buf,
+                                              ResourceLocation tex,
+                                              float size,
+                                              float alpha) {
         pose.scale(size, size, size);
 
-        VertexConsumer vc = buf.getBuffer(RenderType.entityTranslucentEmissive(GLOW_TEX));
+        VertexConsumer vc = buf.getBuffer(RenderType.entityTranslucentEmissive(tex));
         var last = pose.last();
         Matrix4f mat = last.pose();
 

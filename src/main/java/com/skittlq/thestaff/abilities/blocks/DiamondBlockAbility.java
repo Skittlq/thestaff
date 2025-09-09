@@ -2,6 +2,7 @@ package com.skittlq.thestaff.abilities.blocks;
 
 import com.skittlq.thestaff.abilities.BlockAbility;
 import com.skittlq.thestaff.util.AbilityTrigger;
+import com.skittlq.thestaff.util.BlockScanDestruction;
 import com.skittlq.thestaff.util.ScheduleBatchDestruction;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -13,10 +14,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 import static com.skittlq.thestaff.util.SlowMotionHelper.smoothTickRateReset;
 import static com.skittlq.thestaff.util.TickCommand.setTickingRate;
@@ -45,29 +43,17 @@ public class DiamondBlockAbility implements BlockAbility {
     public void onBreakBlock(Level level, Player player, BlockPos origin, ItemStack staff) {
         if (level.isClientSide) return;
 
-        Queue<BlockPos> targets = new LinkedList<>();
-        int depth = 15, height = 4, width = 4;
+        // Collect unique targets to avoid duplicates after new rounding
+        final Set<BlockPos> targets = new LinkedHashSet<>();
 
-        Vec3 look = player.getLookAngle().normalize();
-        Vec3 right = look.cross(new Vec3(0, 1, 0)).normalize();
-        Vec3 up = right.cross(look).normalize();
+        // Base dimensions (ellipse radii)
+        final int depth = 15;
+        final int radiusX = 4;
+        final int radiusY = 4;
 
-        for (int d = 0; d < depth; d++) {
-            Vec3 forwardStep = look.scale(d);
-            BlockPos base = origin.offset((int) forwardStep.x, (int) forwardStep.y, (int) forwardStep.z);
+        BlockScanDestruction.blockScanDestruction(player, origin, radiusX, radiusY, depth, targets);
 
-            for (int y = -height; y <= height; y++) {
-                for (int x = -width; x <= width; x++) {
-                    Vec3 offset = right.scale(x).add(up.scale(y));
-                    BlockPos target = base.offset((int) offset.x, (int) offset.y, (int) offset.z);
-                    if (!target.equals(origin)) {
-                        targets.add(target.immutable());
-                    }
-                }
-            }
-        }
-
-        ScheduleBatchDestruction.schedule((ServerLevel) level, targets, BLOCKS_PER_TICK, player);
+        ScheduleBatchDestruction.schedule((ServerLevel) level, new LinkedList<>(targets), BLOCKS_PER_TICK, player);
     }
 
     @Override

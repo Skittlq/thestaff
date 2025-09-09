@@ -25,8 +25,6 @@ public final class ClientPlayerAnimRuntime {
         STATES.put(player.getUUID(),
                 new State(id, now, anim.loop(), anim.lengthSeconds(), anim.fadeOutSeconds(), seed));
 
-        TheStaff.LOGGER.info("[ANIM] RUNTIME  ▶ start  uuid={} name={} anim={} t={}",
-                player.getUUID(), player.getGameProfile().getName(), id, now);
     }
 
     public static State current(Player player) {
@@ -44,7 +42,6 @@ public final class ClientPlayerAnimRuntime {
     /** Stop any animation for this player. */
     public static void stop(Player player) {
         STATES.remove(player.getUUID());
-        TheStaff.LOGGER.info("[ANIM] RUNTIME  ■ stop   uuid={} name={}", player.getUUID(), player.getGameProfile().getName());
 
     }
 

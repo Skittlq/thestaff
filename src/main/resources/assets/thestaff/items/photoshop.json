@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:composite",
+    "models": [
+      { "type": "minecraft:model",
+        "model": "thestaff:block/photoshop" }
+    ]
+  }
+}

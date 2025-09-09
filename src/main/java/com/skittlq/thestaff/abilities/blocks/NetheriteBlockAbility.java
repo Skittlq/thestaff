@@ -2,6 +2,7 @@ package com.skittlq.thestaff.abilities.blocks;
 
 import com.skittlq.thestaff.abilities.BlockAbility;
 import com.skittlq.thestaff.util.AbilityTrigger;
+import com.skittlq.thestaff.util.BlockScanDestruction;
 import com.skittlq.thestaff.util.ScheduleBatchDestruction;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -45,30 +46,20 @@ public class NetheriteBlockAbility implements BlockAbility {
     public void onBreakBlock(Level level, Player player, BlockPos origin, ItemStack staff) {
         if (level.isClientSide) return;
 
-        Queue<BlockPos> targets = new LinkedList<>();
-        int depth = 20, height = 6, width = 6;
+        // Collect unique targets to avoid duplicates after new rounding
+        final Set<BlockPos> targets = new LinkedHashSet<>();
 
-        Vec3 look = player.getLookAngle().normalize();
-        Vec3 right = look.cross(new Vec3(0, 1, 0)).normalize();
-        Vec3 up = right.cross(look).normalize();
+        // Base dimensions (ellipse radii)
+        final int depth = 20;
+        final int radiusX = 6;
+        final int radiusY = 6;
 
-        for (int d = 0; d < depth; d++) {
-            Vec3 forwardStep = look.scale(d);
-            BlockPos base = origin.offset((int) forwardStep.x, (int) forwardStep.y, (int) forwardStep.z);
+        BlockScanDestruction.blockScanDestruction(player, origin, radiusX, radiusY, depth, targets);
 
-            for (int y = -height; y <= height; y++) {
-                for (int x = -width; x <= width; x++) {
-                    Vec3 offset = right.scale(x).add(up.scale(y));
-                    BlockPos target = base.offset((int) offset.x, (int) offset.y, (int) offset.z);
-                    if (!target.equals(origin)) {
-                        targets.add(target.immutable());
-                    }
-                }
-            }
-        }
-
-        ScheduleBatchDestruction.schedule((ServerLevel) level, targets, BLOCKS_PER_TICK, player);
+        ScheduleBatchDestruction.schedule((ServerLevel) level, new LinkedList<>(targets), BLOCKS_PER_TICK, player);
     }
+
+
 
     @Override
     public void onShiftBreakBlock(Level level, Player player, BlockPos pos, ItemStack staff) {

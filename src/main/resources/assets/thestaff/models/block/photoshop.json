@@ -1,0 +1,13 @@
+{
+  "loader": "neoforge:obj",
+  "model": "thestaff:models/block/photoshop.obj",
+  "mtl_override": "thestaff:models/block/photoshop.mtl",
+  "textures": {
+    "texture0": "thestaff:block/white",
+    "particle":  "thestaff:block/white"
+  },
+  "automatic_culling": false,
+  "shade_quads": true,
+  "flip_v": false,
+  "emissive_ambient": false
+}

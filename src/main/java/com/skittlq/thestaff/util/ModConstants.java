@@ -20,7 +20,7 @@ public class ModConstants {
             ModItems.LIGHT_MINECRAFT.asItem(),
             ModItems.OMNIBLOCK.asItem(),
             ModItems.DARK_MINECRAFT.asItem(),
-            Items.GRASS_BLOCK
+            Items.REDSTONE_BLOCK,
+            Items.COBWEB
     );
-
 }

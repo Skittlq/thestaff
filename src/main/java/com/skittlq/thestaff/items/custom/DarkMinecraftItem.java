@@ -1,9 +1,14 @@
 package com.skittlq.thestaff.items.custom;
 
+import com.skittlq.thestaff.TheStaff;
 import com.skittlq.thestaff.blocks.ModBlocks;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.SlotAccess;
 import net.minecraft.world.entity.player.Player;
@@ -11,8 +16,11 @@ import net.minecraft.world.inventory.ClickAction;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.GameType;
+
+import javax.annotation.Nullable;
 
 public class DarkMinecraftItem extends BlockItem {
     public DarkMinecraftItem(Properties properties) {
@@ -51,6 +59,29 @@ public class DarkMinecraftItem extends BlockItem {
         }
         return super.overrideOtherStackedOnMe(stack, other, slot, action, player, access);
     }
+
+    // inside the dark item class
+    @Override
+    public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, @Nullable EquipmentSlot slot) {
+        super.inventoryTick(stack, level, entity, slot);
+        if (level.isClientSide) return;
+
+        boolean shouldGlow = false;
+        if (entity instanceof Player p) {
+            boolean isHeld = p.getMainHandItem() == stack || p.getOffhandItem() == stack;
+            if (isHeld) {
+                shouldGlow = p.isFallFlying() || p.getAbilities().flying;
+            }
+        }
+
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        CompoundTag root = (data != null) ? data.copyTag() : new CompoundTag();
+        CompoundTag renderTag = root.getCompound(TheStaff.MODID + ":render").orElse(new CompoundTag());
+        renderTag.putBoolean("active", shouldGlow);
+        root.put(TheStaff.MODID + ":render", renderTag);
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
+    }
+
 
 
 }
