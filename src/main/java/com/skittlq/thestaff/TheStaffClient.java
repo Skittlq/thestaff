@@ -16,6 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GrassColor;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -63,6 +64,26 @@ public class TheStaffClient {
                 )
         );
     }
+
+    @SubscribeEvent
+    public static void registerEffects(net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent e) {
+        var key = ResourceLocation.fromNamespaceAndPath("thestaff", "desktop");
+
+        e.register(key, new net.minecraft.client.renderer.DimensionSpecialEffects(
+                net.minecraft.client.renderer.DimensionSpecialEffects.SkyType.NONE,
+                false,   // forceBrightLightmap
+                true     // constantAmbientLight
+        ) {
+            @Override
+            public Vec3 getBrightnessDependentFogColor(Vec3 vec3, float v) {
+                return vec3;
+            }
+
+            @Override
+            public boolean isFoggyAt(int x, int z) { return true; }
+        });
+    }
+
 
     @SubscribeEvent
     public static void registerBlockColors(RegisterColorHandlersEvent.Block e) {
