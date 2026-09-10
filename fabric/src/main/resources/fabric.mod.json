@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "${mod_id}",
+  "version": "${version}",
+  "name": "${mod_name}",
+  "description": "Adds the Staff from AvM.",
+  "authors": ["Skittlq"],
+  "license": "All Rights Reserved",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.skittlq.thestaff.fabric.TheStaffFabric"],
+    "client": ["com.skittlq.thestaff.fabric.TheStaffFabricClient"],
+    "fabric-datagen": ["com.skittlq.thestaff.fabric.TheStaffDataGenerator"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
+

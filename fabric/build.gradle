@@ -1,0 +1,106 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+def targetJavaVersion = 25
+
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        "${project.mod_id}" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java.srcDir '../common/src/main/java'
+        resources {
+            srcDir '../common/src/main/resources'
+            srcDir 'src/generated/resources'
+            exclude '.cache/**'
+        }
+    }
+    client {
+        java.srcDir '../common/src/client/java'
+        resources.srcDir '../common/src/client/resources'
+    }
+    test.java.srcDir '../common/src/test/java'
+}
+
+fabricApi {
+    configureDataGeneration {
+        outputDirectory = file('src/generated/resources')
+        addToResources = false
+        createSourceSet = false
+        client = true
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    inputs.properties version: project.version, mod_id: project.mod_id,
+            mod_name: project.mod_name
+
+    filesMatching('fabric.mod.json') {
+        expand version: project.version, mod_id: project.mod_id,
+                mod_name: project.mod_name
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = targetJavaVersion
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.matching { it.name == 'jar' || it.name == 'remapJar' }.configureEach {
+    archiveFileName.set("${project.mod_id}_fabric_${project.minecraft_version}_${project.mod_version}.jar")
+}
+
+java {
+    withSourcesJar()
+    toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    sourceCompatibility = JavaVersion.toVersion(targetJavaVersion)
+    targetCompatibility = JavaVersion.toVersion(targetJavaVersion)
+}
+
+jar {
+    def projectName = project.name
+    from('../LICENSE') {
+        rename { "${it}_${projectName}" }
+    }
+}
+
+publishing {
+    publications {
+        create('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+}

@@ -1,0 +1,87 @@
+{
+  "folders": [
+    { "name": "common", "path": "./common" },
+    { "name": "fabric", "path": "./fabric" },
+    { "name": "neoforge", "path": "./neoforge" }
+  ],
+  "settings": {
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable"
+  },
+  "extensions": {
+    "recommendations": [
+      "vscjava.vscode-java-pack",
+      "vscjava.vscode-gradle"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Fabric: Run Client",
+        "type": "shell",
+        "command": "./gradlew",
+        "windows": { "command": "gradlew.bat" },
+        "args": ["runClient"],
+        "options": { "cwd": "${workspaceFolder:fabric}" },
+        "problemMatcher": []
+      },
+      {
+        "label": "NeoForge: Run Client",
+        "type": "shell",
+        "command": "./gradlew",
+        "windows": { "command": "gradlew.bat" },
+        "args": ["runClient"],
+        "options": { "cwd": "${workspaceFolder:neoforge}" },
+        "problemMatcher": []
+      },
+      {
+        "label": "Fabric: Data Generation",
+        "type": "shell",
+        "command": "./gradlew",
+        "windows": { "command": "gradlew.bat" },
+        "args": ["runDatagen"],
+        "options": { "cwd": "${workspaceFolder:fabric}" },
+        "problemMatcher": []
+      },
+      {
+        "label": "NeoForge: Data Generation",
+        "type": "shell",
+        "command": "./gradlew",
+        "windows": { "command": "gradlew.bat" },
+        "args": ["runData"],
+        "options": { "cwd": "${workspaceFolder:neoforge}" },
+        "problemMatcher": []
+      },
+      {
+        "label": "Fabric: Test",
+        "type": "shell",
+        "command": "./gradlew",
+        "windows": { "command": "gradlew.bat" },
+        "args": ["test"],
+        "options": { "cwd": "${workspaceFolder:fabric}" },
+        "group": "test",
+        "problemMatcher": ["$javac"]
+      },
+      {
+        "label": "NeoForge: Test",
+        "type": "shell",
+        "command": "./gradlew",
+        "windows": { "command": "gradlew.bat" },
+        "args": ["test"],
+        "options": { "cwd": "${workspaceFolder:neoforge}" },
+        "group": "test",
+        "problemMatcher": ["$javac"]
+      },
+      {
+        "label": "Test: All Loaders",
+        "dependsOrder": "parallel",
+        "dependsOn": ["Fabric: Test", "NeoForge: Test"],
+        "group": { "kind": "test", "isDefault": true },
+        "problemMatcher": []
+      }
+    ]
+  }
+}
+
