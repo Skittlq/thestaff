@@ -33,3 +33,5 @@ replay_*.log
 *.hprof
 *.jfr
 
+/documentation
+/tmp
